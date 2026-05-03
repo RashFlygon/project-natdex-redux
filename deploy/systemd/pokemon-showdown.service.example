@@ -1,0 +1,16 @@
+[Unit]
+Description=Project NatDex Pokemon Showdown Server
+After=network.target
+
+[Service]
+Type=simple
+User=showdown
+Group=showdown
+WorkingDirectory=/opt/project-natdex/server
+ExecStart=/usr/bin/node pokemon-showdown
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

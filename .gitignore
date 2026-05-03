@@ -1,0 +1,44 @@
+# Dependencies and build output
+**/node_modules/
+server/dist/
+server/.tsbuildinfo
+server/*.tsbuildinfo
+client/caches/
+client/play.pokemonshowdown.com/data/
+client/play.pokemonshowdown.com/js/*.map
+
+# Private Pokemon Showdown server state
+server/config/config.js
+server/config/usergroups.csv
+server/config/chatrooms.json
+server/config/avatars.json
+server/config/suspects.json
+server/config/chat-plugins/*.json
+!server/config/chat-plugins/README.md
+server/logs/
+server/databases/
+server/local-server.*.log
+
+# Private client config/local helper state
+client/config/
+client/local-client-server.js
+client/local-client-server.*.log
+client/play.pokemonshowdown.com/local.html
+
+# Secrets and local machine state
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.crt
+*.log
+.chrome-*
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
