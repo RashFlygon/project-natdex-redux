@@ -24,8 +24,17 @@ server {
 	root /opt/project-natdex/client/play.pokemonshowdown.com;
 	index index.html;
 
+	add_header X-Content-Type-Options nosniff;
+	add_header Referrer-Policy strict-origin-when-cross-origin;
+
 	location / {
 		try_files $uri $uri/ /index.html;
+	}
+
+	location ~* \.(?:css|js|png|jpg|jpeg|gif|ico|svg|webp|woff2?)$ {
+		try_files $uri =404;
+		expires 7d;
+		add_header Cache-Control "public";
 	}
 }
 
@@ -44,6 +53,7 @@ server {
 		proxy_set_header Host $host;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_buffering off;
 		proxy_read_timeout 3600;
 	}
 }

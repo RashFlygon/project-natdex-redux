@@ -7,7 +7,7 @@ Type=simple
 User=showdown
 Group=showdown
 WorkingDirectory=/opt/project-natdex/server
-ExecStart=/usr/bin/node pokemon-showdown
+ExecStart=/usr/bin/node pokemon-showdown start
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production

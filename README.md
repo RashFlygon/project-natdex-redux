@@ -8,23 +8,29 @@ Project NatDex is a custom Pokemon Showdown deployment containing:
 
 ## Local Development
 
+From the repo root, install everything:
+
+```bash
+npm run install:all
+```
+
 Install/build the server:
 
 ```bash
-cd server
-npm install
-npm run build
+npm run build:server
 ```
 
 Build client data from this repo's server checkout:
 
 ```bash
-cd ../client
-npm install
-node build-tools/build-indexes
+npm run build:client:indexes
+npm run build:client
 ```
 
 In this monorepo, `build-tools/build-indexes` automatically prefers the sibling `../server` checkout. You can still override it explicitly with `PS_SERVER_PATH=/path/to/server`.
+
+The root scripts create safe default client config files from examples if
+`client/config/config.js` or `client/config/routes.json` do not exist.
 
 ## Production Shape
 
@@ -42,3 +48,5 @@ Run the Showdown server as a non-root user behind nginx or Caddy. Expose only po
 Use the official Pokemon Showdown loginserver for the first production version. Do not enable development-only login bypasses on a public server.
 
 Keep production `server/config/config.js`, usergroups, room config, logs, databases, SSL keys, and API tokens out of Git.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the Oracle Cloud VPS setup.

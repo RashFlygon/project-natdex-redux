@@ -4,7 +4,9 @@ Thumbs.db
 npm-debug.log
 local-client-server.js
 local-client-server.*.log
-/config/
+/config/*
+!/config/config-example.js
+!/config/routes.example.json
 /vendor/
 /caches/
 

@@ -20,7 +20,9 @@ server/databases/
 server/local-server.*.log
 
 # Private client config/local helper state
-client/config/
+client/config/*
+!client/config/config-example.js
+!client/config/routes.example.json
 client/local-client-server.js
 client/local-client-server.*.log
 client/play.pokemonshowdown.com/local.html

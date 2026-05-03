@@ -1,0 +1,19 @@
+{
+  "name": "project-natdex-redux",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Project NatDex Redux Pokemon Showdown server and client monorepo",
+  "scripts": {
+    "prepare:client-config": "node scripts/prepare-client-config.js",
+    "install:server": "npm --prefix server install",
+    "install:client": "npm --prefix client install",
+    "install:all": "npm run install:server && npm run install:client",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm run prepare:client-config && npm --prefix client run build",
+    "build:client:indexes": "npm run prepare:client-config && node client/build-tools/build-indexes",
+    "build:all": "npm run build:server && npm run build:client:indexes && npm run build:client",
+    "start:server": "npm --prefix server start",
+    "check:server": "npm --prefix server run tsc",
+    "status": "git status -sb"
+  }
+}
