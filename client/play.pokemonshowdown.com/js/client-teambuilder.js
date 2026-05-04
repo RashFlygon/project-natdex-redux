@@ -9,6 +9,13 @@
 		return '';
 	}
 
+	function setNatDexChampionsTeamMod(team) {
+		if (!team) return '';
+		var mod = getNatDexChampionsMod(team.format || '');
+		team.mod = mod;
+		return mod;
+	}
+
 	function usesChampionsStatPoints(format) {
 		return (format.includes('champions') || format.includes('champs')) &&
 			!format.includes('natdexchampionsclassic') && !format.includes('natdexchampsclassic');
@@ -49,7 +56,7 @@
 				if (this.curTeam.format.includes('legends')) {
 					this.curTeam.dex = Dex.mod('gen9legendsou');
 				}
-				var natDexChampionsMod = getNatDexChampionsMod(this.curTeam.format);
+				var natDexChampionsMod = setNatDexChampionsTeamMod(this.curTeam);
 				if (natDexChampionsMod) {
 					this.curTeam.dex = Dex.mod(natDexChampionsMod);
 				} else if (this.curTeam.format.includes('champions')) {
@@ -783,7 +790,7 @@
 			if (this.curTeam.format.includes('legends')) {
 				this.curTeam.dex = Dex.mod('gen9legendsou');
 			}
-			var natDexChampionsMod = getNatDexChampionsMod(this.curTeam.format);
+			var natDexChampionsMod = setNatDexChampionsTeamMod(this.curTeam);
 			if (natDexChampionsMod) {
 				this.curTeam.dex = Dex.mod(natDexChampionsMod);
 			} else if (this.curTeam.format.includes('champions')) {
@@ -1657,7 +1664,7 @@
 			if (this.curTeam.format.includes('legends')) {
 				this.curTeam.dex = Dex.mod('gen9legendsou');
 			}
-			var natDexChampionsMod = getNatDexChampionsMod(this.curTeam.format);
+			var natDexChampionsMod = setNatDexChampionsTeamMod(this.curTeam);
 			if (natDexChampionsMod) {
 				this.curTeam.dex = Dex.mod(natDexChampionsMod);
 			} else if (this.curTeam.format.includes('champions')) {
@@ -2224,6 +2231,7 @@
 					this.$chart.scrollTop(0);
 				}
 				this.search.$inputEl = $inputEl;
+				if (this.curSet) this.curSet.mod = setNatDexChampionsTeamMod(this.curTeam);
 				this.search.setType(type, this.curTeam.format || 'gen9', this.curSet, cur);
 				this.qInitial = q;
 				this.search.qName = this.curChartName;

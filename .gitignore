@@ -38,6 +38,7 @@ client/play.pokemonshowdown.com/local.html
 *.log
 .chrome-*
 VPS_HANDOFF.md
+TEAMBUILDER_ILLEGAL_HANDOFF.md
 deploy/artifacts/
 
 # OS/editor noise

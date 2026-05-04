@@ -584,6 +584,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		'nfe' | 'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'predlcnatdex' | 'svdlc1' | 'svdlc1doubles' |
 		'svdlc1natdex' | 'stadium' | 'lc' | 'legendsza' | 'champions' |
 		'natdexchampsclassic' | 'natdexchampsclassicdoubles' | 'natdexchampsmodern' | 'natdexchampsmoderndoubles' | null = null;
+	protected mod: 'gen9natdexchampsclassic' | 'gen9natdexchampsmodern' | '' = '';
 	isDoubles = false;
 
 	/**
@@ -613,6 +614,19 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.dex = Dex.forGen(gen);
 		} else if (!format) {
 			this.dex = Dex;
+		}
+
+		const setMod = typeof speciesOrSet === 'string' ? '' : toID((speciesOrSet as Dex.PokemonSet & { mod?: string }).mod);
+		if (setMod === 'gen9natdexchampsclassic') {
+			this.mod = 'gen9natdexchampsclassic';
+			this.formatType = format.includes('doubles') ? 'natdexchampsclassicdoubles' : 'natdexchampsclassic';
+			this.dex = Dex.mod('gen9natdexchampsclassic' as ID);
+			this.isDoubles = format.includes('doubles');
+		} else if (setMod === 'gen9natdexchampsmodern') {
+			this.mod = 'gen9natdexchampsmodern';
+			this.formatType = format.includes('doubles') ? 'natdexchampsmoderndoubles' : 'natdexchampsmodern';
+			this.dex = Dex.mod('gen9natdexchampsmodern' as ID);
+			this.isDoubles = format.includes('doubles');
 		}
 
 		if (format.startsWith('dlc1') && this.dex.gen === 8) {
@@ -652,6 +666,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			if (!format) format = 'ou' as ID;
 		}
 		if (format.includes('natdexchampionsclassic') || format.includes('natdexchampsclassic')) {
+			this.mod = 'gen9natdexchampsclassic';
 			this.formatType = format.includes('doubles') ? 'natdexchampsclassicdoubles' : 'natdexchampsclassic';
 			this.dex = Dex.mod('gen9natdexchampsclassic' as ID);
 			format = format.replace('natdexchampionsclassic', '').replace('natdexchampsclassic', '') as ID;
@@ -659,6 +674,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.isDoubles = format.includes('doubles');
 		}
 		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) {
+			this.mod = 'gen9natdexchampsmodern';
 			this.formatType = format.includes('doubles') ? 'natdexchampsmoderndoubles' : 'natdexchampsmodern';
 			this.dex = Dex.mod('gen9natdexchampsmodern' as ID);
 			format = format.replace('natdexchampionsmodern', '').replace('natdexchampsmodern', '') as ID;
