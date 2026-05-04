@@ -9,6 +9,18 @@
 		return '';
 	}
 
+	function getNatDexChampionsDefaultLevel(format) {
+		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return 50;
+		return 100;
+	}
+
+	function setNatDexChampionsTeamMod(team) {
+		if (!team) return '';
+		var mod = getNatDexChampionsMod(team.format || '');
+		team.mod = mod;
+		return mod;
+	}
+
 	function usesChampionsStatPoints(format) {
 		return (format.includes('champions') || format.includes('champs')) &&
 			!format.includes('natdexchampionsclassic') && !format.includes('natdexchampsclassic');
@@ -49,7 +61,7 @@
 				if (this.curTeam.format.includes('legends')) {
 					this.curTeam.dex = Dex.mod('gen9legendsou');
 				}
-				var natDexChampionsMod = getNatDexChampionsMod(this.curTeam.format);
+				var natDexChampionsMod = setNatDexChampionsTeamMod(this.curTeam);
 				if (natDexChampionsMod) {
 					this.curTeam.dex = Dex.mod(natDexChampionsMod);
 				} else if (this.curTeam.format.includes('champions')) {
@@ -783,7 +795,7 @@
 			if (this.curTeam.format.includes('legends')) {
 				this.curTeam.dex = Dex.mod('gen9legendsou');
 			}
-			var natDexChampionsMod = getNatDexChampionsMod(this.curTeam.format);
+			var natDexChampionsMod = setNatDexChampionsTeamMod(this.curTeam);
 			if (natDexChampionsMod) {
 				this.curTeam.dex = Dex.mod(natDexChampionsMod);
 			} else if (this.curTeam.format.includes('champions')) {
@@ -1357,7 +1369,7 @@
 				'F': 'Female',
 				'N': '&mdash;'
 			};
-			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || 100) + '</span>';
+			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || getNatDexChampionsDefaultLevel(this.curTeam.format)) + '</span>';
 			if (this.curTeam.gen > 1) {
 				buf += '<span class="detailcell"><label>Gender</label>' + GenderChart[set.gender || species.gender || 'N'] + '</span>';
 				if (isLetsGo) {
@@ -1657,7 +1669,7 @@
 			if (this.curTeam.format.includes('legends')) {
 				this.curTeam.dex = Dex.mod('gen9legendsou');
 			}
-			var natDexChampionsMod = getNatDexChampionsMod(this.curTeam.format);
+			var natDexChampionsMod = setNatDexChampionsTeamMod(this.curTeam);
 			if (natDexChampionsMod) {
 				this.curTeam.dex = Dex.mod(natDexChampionsMod);
 			} else if (this.curTeam.format.includes('champions')) {
@@ -2224,6 +2236,7 @@
 					this.$chart.scrollTop(0);
 				}
 				this.search.$inputEl = $inputEl;
+				if (this.curSet) this.curSet.mod = setNatDexChampionsTeamMod(this.curTeam);
 				this.search.setType(type, this.curTeam.format || 'gen9', this.curSet, cur);
 				this.qInitial = q;
 				this.search.qName = this.curChartName;
@@ -2932,7 +2945,7 @@
 			buf += '<div class="resultheader"><h3>Details</h3></div>';
 			buf += '<form class="detailsform">';
 
-			buf += '<div class="formrow"><label class="formlabel">Level:</label><div><input type="number" min="1" max="100" step="1" name="level" value="' + (typeof set.level === 'number' ? set.level : 100) + '" class="textbox inputform numform" /></div></div>';
+			buf += '<div class="formrow"><label class="formlabel">Level:</label><div><input type="number" min="1" max="100" step="1" name="level" value="' + (typeof set.level === 'number' ? set.level : getNatDexChampionsDefaultLevel(this.curTeam.format)) + '" class="textbox inputform numform" /></div></div>';
 
 			if (this.curTeam.gen > 1) {
 				buf += '<div class="formrow"><label class="formlabel">Gender:</label><div>';
@@ -3101,7 +3114,7 @@
 				'F': 'Female',
 				'N': '&mdash;'
 			};
-			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || 100) + '</span>';
+			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || getNatDexChampionsDefaultLevel(this.curTeam.format)) + '</span>';
 			if (this.curTeam.gen > 1) {
 				buf += '<span class="detailcell"><label>Gender</label>' + GenderChart[set.gender || 'N'] + '</span>';
 				if (isLetsGo) {

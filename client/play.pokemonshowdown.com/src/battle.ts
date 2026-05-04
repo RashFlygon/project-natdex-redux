@@ -365,7 +365,13 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 			if (ppUsed[1] < 0) ppUsed[1] = 0;
 			const move = this.side.battle.dex.moves.get(entry[0]);
 			let maxpp = (move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5);
-			if (this.side.battle.tier.includes('Champions')) {
+			if (this.side.battle.tier.includes('NatDex Champions (Modern)')) {
+				if (move.pp === 1 || move.noPPBoosts) maxpp = move.pp;
+				else if (move.id === 'protect' || move.pp <= 5) maxpp = 8;
+				else if (move.pp <= 10) maxpp = 12;
+				else if (move.pp <= 15) maxpp = 16;
+				else maxpp = 20;
+			} else if (this.side.battle.tier.includes('Champions') && !this.side.battle.tier.includes('NatDex Champions (Classic)')) {
 				maxpp = move.pp > 20 ? 20 : move.pp;
 				maxpp = move.pp === 1 || move.noPPBoosts ? move.pp : (move.pp / 5 + 1) * 4;
 			}

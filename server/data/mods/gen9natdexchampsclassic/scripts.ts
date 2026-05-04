@@ -23,4 +23,9 @@ export const Scripts: ModdedBattleScriptsData = {
 		if (move.noPPBoosts) return move.pp;
 		return move.pp * (5 + ppUps) / 5;
 	},
+	actions: {
+		canTerastallize(pokemon) {
+			return pokemon.teraType || null;
+		},
+	},
 };
