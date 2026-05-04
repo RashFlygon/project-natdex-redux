@@ -34,6 +34,13 @@ const natDexChampionsDoublesBans = [
 	'Commander', 'Dark Void', 'Swagger',
 ];
 
+const natDexChampionsDraftRuleRemovals = [
+	'!Species Clause',
+	'!Evasion Clause',
+	'!Evasion Items Clause',
+	'!Evasion Moves Clause',
+];
+
 const AllFormats: import('../sim/dex-formats').FormatList = [
 
 	// S/V Singles
@@ -362,7 +369,11 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 100'],
+		ruleset: [
+			'Standard Draft', 'NatDex Mod', 'Tera Type Preview',
+			...natDexChampionsDraftRuleRemovals,
+			'Adjust Level = 100',
+		],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Classic) Doubles Draft",
@@ -370,14 +381,22 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		gameType: 'doubles',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Evasion Clause', 'Adjust Level = 100'],
+		ruleset: [
+			'Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod',
+			...natDexChampionsDraftRuleRemovals,
+			'Adjust Level = 100',
+		],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Draft",
 		mod: 'gen9natdexchampsmodern',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: [
+			'Standard Draft', 'NatDex Mod', 'Tera Type Preview',
+			...natDexChampionsDraftRuleRemovals,
+			'Adjust Level = 50',
+		],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles Draft",
@@ -385,7 +404,11 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		gameType: 'doubles',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Evasion Clause', 'Adjust Level = 50'],
+		ruleset: [
+			'Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod',
+			...natDexChampionsDraftRuleRemovals,
+			'Adjust Level = 50',
+		],
 	},
 
 	// Unofficial Metagames
