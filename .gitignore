@@ -5,6 +5,7 @@ server/.tsbuildinfo
 server/*.tsbuildinfo
 client/caches/
 client/play.pokemonshowdown.com/data/
+client/play.pokemonshowdown.com/config/
 client/play.pokemonshowdown.com/js/*.map
 
 # Private Pokemon Showdown server state
@@ -36,6 +37,8 @@ client/play.pokemonshowdown.com/local.html
 *.crt
 *.log
 .chrome-*
+VPS_HANDOFF.md
+deploy/artifacts/
 
 # OS/editor noise
 .DS_Store

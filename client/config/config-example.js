@@ -10,9 +10,9 @@ Config.whitelist = ['wikipedia.org'];
 // This file is safe to commit; config/config.js is intentionally ignored.
 Config.defaultserver = {
 	id: 'projectnatdex',
-	host: 'sim.example.com',
+	host: 'play.champsnatdex.dynv6.net',
 	port: 443,
-	httpport: 8000,
+	httpport: 80,
 	altport: 80,
 	registered: true,
 };

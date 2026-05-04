@@ -37,6 +37,7 @@ export interface ServerInfo {
 	prefix: string;
 	afd?: boolean;
 	registered?: boolean;
+	https?: boolean;
 }
 export interface PSConfig {
 	server: ServerInfo;
@@ -167,7 +168,7 @@ class PSPrefs extends PSStreamModel<string | null> {
 
 	storageEngine: 'localStorage' | 'iframeLocalStorage' | '' = '';
 	storage: { [k: string]: any } = {};
-	readonly origin = `https://${Config.routes.client}`;
+	readonly origin = `${location.protocol}//${Config.routes.client}`;
 	constructor() {
 		super();
 
@@ -807,7 +808,8 @@ class PSServer {
 	altport = Config.defaultserver.altport;
 	registered = Config.defaultserver.registered;
 	prefix = '/showdown';
-	protocol: 'http' | 'https' = Config.defaultserver.httpport ? 'https' : 'http';
+	protocol: 'http' | 'https' = Config.defaultserver.https === false ?
+		'http' : Config.defaultserver.httpport ? 'https' : 'http';
 	groups: { [symbol: string]: PSGroup } = {
 		'#': {
 			name: "Room Owner (#)",

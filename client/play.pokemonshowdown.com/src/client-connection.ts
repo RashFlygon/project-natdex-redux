@@ -107,7 +107,7 @@ export class PSConnection {
 		if (this.worker) return; // must be one or the other
 
 		const server = PS.server;
-		const port = server.protocol === 'https' ? `:${server.port}` : `:${server.httpport!}`;
+		const port = server.protocol === 'https' ? `:${server.port}` : `:${server.httpport || server.port}`;
 		const url = `${server.protocol}://${server.host}${port}${server.prefix}`;
 
 		try {
@@ -221,7 +221,7 @@ export class PSStorage {
 	static frame: WindowProxy | null = null;
 	static requests: Record<string, (data: any) => void> | null = null;
 	static requestCount = 0;
-	static readonly origin = `https://${Config.routes.client}`;
+	static readonly origin = `${location.protocol}//${Config.routes.client}`;
 	static loader?: () => void;
 	static loaded: Promise<void> | boolean = false;
 	static init(): void | Promise<void> {
@@ -248,7 +248,7 @@ export class PSStorage {
 
 		if (document.location.hostname !== Config.routes.client) {
 			const iframe = document.createElement('iframe');
-			iframe.src = 'https://' + Config.routes.client + '/crossdomain.php?host=' +
+			iframe.src = location.protocol + '//' + Config.routes.client + '/crossdomain.php?host=' +
 				encodeURIComponent(document.location.hostname) +
 				'&path=' + encodeURIComponent(document.location.pathname.substr(1)) +
 				'&protocol=' + encodeURIComponent(document.location.protocol);
@@ -257,7 +257,7 @@ export class PSStorage {
 		} else {
 			Config.server ||= Config.defaultserver;
 			$(
-				`<iframe src="https://${Config.routes.client}/crossprotocol.html?v1.2" style="display: none;"></iframe>`
+				`<iframe src="${location.protocol}//${Config.routes.client}/crossprotocol.html?v1.2" style="display: none;"></iframe>`
 			).appendTo('body');
 			setTimeout(() => {
 				// HTTPS may be blocked

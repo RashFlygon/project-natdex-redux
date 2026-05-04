@@ -1,6 +1,6 @@
 {
-  "root": "example.com",
-  "client": "play.example.com",
+  "root": "play.champsnatdex.dynv6.net",
+  "client": "play.champsnatdex.dynv6.net",
   "dex": "dex.pokemonshowdown.com",
   "replays": "replay.pokemonshowdown.com",
   "users": "pokemonshowdown.com/users",
