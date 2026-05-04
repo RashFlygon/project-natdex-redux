@@ -1444,14 +1444,6 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 			table = table['gen3frlg'];
 		} else if (this.formatType === 'natdex') {
 			table = table[`gen${this.dex.gen}natdex`];
-		} else if (this.formatType?.endsWith('doubles')) { // no natdex/bdsp doubles support
-			table = table[`gen${this.dex.gen}doubles`];
-		} else if (this.formatType === 'metronome') {
-			table = table[`gen${this.dex.gen}metronome`];
-		} else if (this.formatType === 'legendsza') {
-			table = table[`gen9legendsou`];
-		} else if (this.formatType === 'champions') {
-			table = table[`champions`];
 		} else if (this.formatType === 'natdexchampsclassic') {
 			table = table[`gen9natdexchampsclassic`];
 		} else if (this.formatType === 'natdexchampsclassicdoubles') {
@@ -1460,6 +1452,14 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 			table = table[`gen9natdexchampsmodern`];
 		} else if (this.formatType === 'natdexchampsmoderndoubles') {
 			table = table[`gen9natdexchampsmoderndoubles`];
+		} else if (this.formatType?.endsWith('doubles')) { // no natdex/bdsp doubles support
+			table = table[`gen${this.dex.gen}doubles`];
+		} else if (this.formatType === 'metronome') {
+			table = table[`gen${this.dex.gen}metronome`];
+		} else if (this.formatType === 'legendsza') {
+			table = table[`gen9legendsou`];
+		} else if (this.formatType === 'champions') {
+			table = table[`champions`];
 		} else if (this.dex.gen < 9) {
 			table = table[`gen${this.dex.gen}`];
 		}
@@ -1834,7 +1834,8 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		const isTradebacks = format.includes('tradebacks');
 		const regionBornLegality = dex.gen >= 6 &&
 			(/^battle(spot|stadium|festival)/.test(format) || format.startsWith('bss') ||
-				format.startsWith('vgc') || (dex.gen === 9 && this.formatType !== 'natdex' && this.formatType !== 'legendsza'));
+				format.startsWith('vgc') || (dex.gen === 9 && this.formatType !== 'natdex' &&
+				this.formatType !== 'legendsza' && !this.formatType?.startsWith('natdexchamps')));
 
 		let learnsetid = this.firstLearnsetid(species.id);
 		let moves: string[] = [];
