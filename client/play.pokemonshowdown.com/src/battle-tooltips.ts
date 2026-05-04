@@ -149,13 +149,6 @@ export class ModifiableValue {
 export class BattleTooltips {
 	battle: Battle;
 
-private fixNatDexClassicTooltipLevel(pokemon: Pokemon | null) {
-if (!pokemon) return;
-if (!this.battle.tier.includes('NatDex Champions (Classic)')) return;
-if ((pokemon.details || '').includes(', L')) return;
-if (pokemon.level === 50) pokemon.level = 100;
-}
-
 	constructor(battle: Battle) {
 		this.battle = battle;
 	}
@@ -327,7 +320,6 @@ if (pokemon.level === 50) pokemon.level = 100;
 					}
 				}
 			} else {
-				this.fixNatDexClassicTooltipLevel(pokemon);
 				buf = this.showPokemonTooltip(pokemon);
 			}
 			break;
@@ -352,7 +344,6 @@ if (pokemon.level === 50) pokemon.level = 100;
 				serverPokemon = this.battle.myAllyPokemon[pokemonIndex];
 			}
 			if (!pokemon) return false;
-			this.fixNatDexClassicTooltipLevel(pokemon);
 			buf = this.showPokemonTooltip(pokemon, serverPokemon, true);
 			break;
 		}
