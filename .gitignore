@@ -38,7 +38,6 @@ client/play.pokemonshowdown.com/local.html
 *.log
 .chrome-*
 VPS_HANDOFF.md
-TEAMBUILDER_ILLEGAL_HANDOFF.md
 deploy/artifacts/
 
 # OS/editor noise
@@ -48,5 +47,3 @@ Thumbs.db
 .vscode/
 *.swp
 *~
-natdex-redux-fixes-v2/apply-natdex-redux-fixes-v2.mjs
-natdex-redux-fixes-v2/deploy/caddy/Caddyfile.example
