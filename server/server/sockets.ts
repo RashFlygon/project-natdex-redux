@@ -87,7 +87,11 @@ export const Sockets = new class {
 		}
 		const workerCount = processesCount?.['network'] ?? 1;
 
-		PM.env = { PSPORT: Config.port, PSBINDADDR: Config.bindaddress || '0.0.0.0', PSNOSSL: Config.ssl ? 0 : 1 };
+		PM.env = {
+			PSPORT: Config.port,
+			PSBINDADDR: process.env.PSBINDADDR || Config.bindaddress || '0.0.0.0',
+			PSNOSSL: Config.ssl ? 0 : 1,
+		};
 		PM.subscribeSpawn(worker => void this.onSpawn(worker));
 		PM.subscribeUnspawn(this.onUnspawn);
 
