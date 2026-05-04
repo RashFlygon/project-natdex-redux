@@ -528,6 +528,13 @@
 
 		return buf;
 	};
+	Search.prototype.getNatDexChampionsModernPP = function (move) {
+		if (move.pp === 1 || move.noPPBoosts) return move.pp;
+		if (move.id === 'protect' || move.pp <= 5) return 8;
+		if (move.pp <= 10) return 12;
+		if (move.pp <= 15) return 16;
+		return 20;
+	};
 	Search.prototype.renderMoveRow = function (move, matchStart, matchLength, errorMessage, attrs) {
 		if (!attrs) attrs = '';
 		if (!move) return '<li class="result">Unrecognized move</li>';
@@ -570,7 +577,9 @@
 		// power, accuracy, pp
 		var pp = (move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5);
 		if (this.engine && this.engine.dex.gen < 3) pp = Math.min(61, pp);
-		if (this.engine && this.engine.dex.modid === 'champions') {
+		if (this.engine && this.engine.dex.modid === 'gen9natdexchampsmodern') {
+			pp = this.getNatDexChampionsModernPP(move);
+		} else if (this.engine && this.engine.dex.modid === 'champions') {
 			pp = move.pp > 20 ? 20 : move.pp;
 			if (!move.noPPBoosts) pp = (pp / 5 + 1) * 4;
 		}
@@ -611,7 +620,9 @@
 		// power, accuracy, pp
 		var pp = (move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5);
 		if (this.engine && this.engine.dex.gen < 3) pp = Math.min(61, pp);
-		if (this.engine && this.engine.dex.modid === 'champions') {
+		if (this.engine && this.engine.dex.modid === 'gen9natdexchampsmodern') {
+			pp = this.getNatDexChampionsModernPP(move);
+		} else if (this.engine && this.engine.dex.modid === 'champions') {
 			pp = move.pp > 20 ? 20 : move.pp;
 			if (!move.noPPBoosts) pp = (pp / 5 + 1) * 4;
 		}
@@ -654,7 +665,9 @@
 		// power, accuracy, pp
 		var pp = move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5;
 		if (this.engine && this.engine.dex.gen < 3) pp = Math.min(61, pp);
-		if (this.engine && this.engine.dex.modid === 'champions') {
+		if (this.engine && this.engine.dex.modid === 'gen9natdexchampsmodern') {
+			pp = this.getNatDexChampionsModernPP(move);
+		} else if (this.engine && this.engine.dex.modid === 'champions') {
 			pp = move.pp > 20 ? 20 : move.pp;
 			if (!move.noPPBoosts) pp = (pp / 5 + 1) * 4;
 		}

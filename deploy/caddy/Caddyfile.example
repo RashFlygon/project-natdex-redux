@@ -5,6 +5,24 @@ play.champsnatdex.dynv6.net {
 		reverse_proxy 127.0.0.1:8000
 	}
 
+	handle /sprites/* {
+		reverse_proxy https://play.pokemonshowdown.com {
+			header_up Host play.pokemonshowdown.com
+		}
+	}
+
+	handle /audio/* {
+		reverse_proxy https://play.pokemonshowdown.com {
+			header_up Host play.pokemonshowdown.com
+		}
+	}
+
+	handle /fx/* {
+		reverse_proxy https://play.pokemonshowdown.com {
+			header_up Host play.pokemonshowdown.com
+		}
+	}
+
 	handle /~~* {
 		reverse_proxy https://play.pokemonshowdown.com {
 			header_up Host play.pokemonshowdown.com

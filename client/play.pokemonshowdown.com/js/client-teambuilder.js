@@ -9,6 +9,11 @@
 		return '';
 	}
 
+	function getNatDexChampionsDefaultLevel(format) {
+		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return 50;
+		return 100;
+	}
+
 	function setNatDexChampionsTeamMod(team) {
 		if (!team) return '';
 		var mod = getNatDexChampionsMod(team.format || '');
@@ -1364,7 +1369,7 @@
 				'F': 'Female',
 				'N': '&mdash;'
 			};
-			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || 100) + '</span>';
+			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || getNatDexChampionsDefaultLevel(this.curTeam.format)) + '</span>';
 			if (this.curTeam.gen > 1) {
 				buf += '<span class="detailcell"><label>Gender</label>' + GenderChart[set.gender || species.gender || 'N'] + '</span>';
 				if (isLetsGo) {
@@ -2940,7 +2945,7 @@
 			buf += '<div class="resultheader"><h3>Details</h3></div>';
 			buf += '<form class="detailsform">';
 
-			buf += '<div class="formrow"><label class="formlabel">Level:</label><div><input type="number" min="1" max="100" step="1" name="level" value="' + (typeof set.level === 'number' ? set.level : 100) + '" class="textbox inputform numform" /></div></div>';
+			buf += '<div class="formrow"><label class="formlabel">Level:</label><div><input type="number" min="1" max="100" step="1" name="level" value="' + (typeof set.level === 'number' ? set.level : getNatDexChampionsDefaultLevel(this.curTeam.format)) + '" class="textbox inputform numform" /></div></div>';
 
 			if (this.curTeam.gen > 1) {
 				buf += '<div class="formrow"><label class="formlabel">Gender:</label><div>';
@@ -3109,7 +3114,7 @@
 				'F': 'Female',
 				'N': '&mdash;'
 			};
-			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || 100) + '</span>';
+			buf += '<span class="detailcell detailcell-first"><label>Level</label>' + (set.level || getNatDexChampionsDefaultLevel(this.curTeam.format)) + '</span>';
 			if (this.curTeam.gen > 1) {
 				buf += '<span class="detailcell"><label>Gender</label>' + GenderChart[set.gender || 'N'] + '</span>';
 				if (isLetsGo) {

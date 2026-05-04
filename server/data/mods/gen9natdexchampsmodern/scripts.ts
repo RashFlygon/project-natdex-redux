@@ -25,4 +25,11 @@ export const Scripts: ModdedBattleScriptsData = {
 			}
 		}
 	},
+	calculatePP(move) {
+		if (move.noPPBoosts || move.pp === 1) return move.pp;
+		if (move.id === 'protect' || move.pp <= 5) return 8;
+		if (move.pp <= 10) return 12;
+		if (move.pp <= 15) return 16;
+		return 20;
+	},
 };
