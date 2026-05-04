@@ -651,17 +651,17 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			format = format.slice(7) as ID;
 			if (!format) format = 'ou' as ID;
 		}
-		if (format.includes('natdexchampionsclassic')) {
+		if (format.includes('natdexchampionsclassic') || format.includes('natdexchampsclassic')) {
 			this.formatType = format.includes('doubles') ? 'natdexchampsclassicdoubles' : 'natdexchampsclassic';
 			this.dex = Dex.mod('gen9natdexchampsclassic' as ID);
-			format = format.replace('natdexchampionsclassic', '') as ID;
+			format = format.replace('natdexchampionsclassic', '').replace('natdexchampsclassic', '') as ID;
 			if (!format) format = 'ou' as ID;
 			this.isDoubles = format.includes('doubles');
 		}
-		if (format.includes('natdexchampionsmodern')) {
+		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) {
 			this.formatType = format.includes('doubles') ? 'natdexchampsmoderndoubles' : 'natdexchampsmodern';
 			this.dex = Dex.mod('gen9natdexchampsmodern' as ID);
-			format = format.replace('natdexchampionsmodern', '') as ID;
+			format = format.replace('natdexchampionsmodern', '').replace('natdexchampsmodern', '') as ID;
 			if (!format) format = 'ou' as ID;
 			this.isDoubles = format.includes('doubles');
 		}

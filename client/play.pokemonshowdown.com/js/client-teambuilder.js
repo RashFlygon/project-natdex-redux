@@ -4,17 +4,19 @@
 	var teams;
 
 	function getNatDexChampionsMod(format) {
-		if (format.includes('natdexchampionsclassic')) return 'gen9natdexchampsclassic';
-		if (format.includes('natdexchampionsmodern')) return 'gen9natdexchampsmodern';
+		if (format.includes('natdexchampionsclassic') || format.includes('natdexchampsclassic')) return 'gen9natdexchampsclassic';
+		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return 'gen9natdexchampsmodern';
 		return '';
 	}
 
 	function usesChampionsStatPoints(format) {
-		return format.includes('champions') && !format.includes('natdexchampionsclassic');
+		return (format.includes('champions') || format.includes('champs')) &&
+			!format.includes('natdexchampionsclassic') && !format.includes('natdexchampsclassic');
 	}
 
 	function supportsTeraType(format) {
-		return !format.includes('champions') || format.includes('natdexchampions');
+		return !(format.includes('champions') || format.includes('champs')) ||
+			format.includes('natdexchampions') || format.includes('natdexchamps');
 	}
 
 	exports.TeambuilderRoom = exports.Room.extend({
@@ -1933,7 +1935,7 @@
 			curSet.name = this.curSet.name || undefined;
 
 			// never preserve current set tera, even if smogon set used default
-			if (this.curSet.gen === 9 && !this.curTeam.format.includes('champions')) {
+			if (this.curSet.gen === 9 && !this.curTeam.format.includes('champions') && !this.curTeam.format.includes('champs')) {
 				curSet.teraType = sampleSet.teraType || species.requiredTeraType || species.types[0];
 			}
 
@@ -2920,7 +2922,7 @@
 		updateDetailsForm: function () {
 			var buf = '';
 			var set = this.curSet;
-			var isChampions = this.curTeam.format.includes('champions');
+			var isChampions = this.curTeam.format.includes('champions') || this.curTeam.format.includes('champs');
 			var isLetsGo = this.curTeam.format.includes('letsgo');
 			var isBDSP = this.curTeam.format.includes('bdsp');
 			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex');
@@ -3022,7 +3024,7 @@
 			var set = this.curSet;
 			if (!set) return;
 			var species = this.curTeam.dex.species.get(set.species);
-			var isChampions = this.curTeam.format.includes('champions');
+			var isChampions = this.curTeam.format.includes('champions') || this.curTeam.format.includes('champs');
 			var isLetsGo = this.curTeam.format.includes('letsgo');
 			var isBDSP = this.curTeam.format.includes('bdsp');
 			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex');
@@ -3545,7 +3547,7 @@
 
 			if (this.curTeam.format.includes('1v1') || this.curTeam.format.includes('categoryswap') ||
 				this.curTeam.format.includes('partnersincrime') || this.curTeam.format.includes('typesplit') ||
-				this.curTeam.format.includes('champions')) return;
+				this.curTeam.format.includes('champions') || this.curTeam.format.includes('champs')) return;
 			if (this.curTeam.format === 'gen7hiddentype') return;
 
 			var minAtk = true;
@@ -3634,8 +3636,8 @@
 				if (baseFormat.substr(-5) === 'draft') baseFormat = baseFormat.substr(0, baseFormat.length - 5);
 				if (!baseFormat) baseFormat = 'ou';
 				if (this.curTeam && this.curTeam.format) {
-					if (fullFormat.includes('natdexchampionsmodern')) set.level = 50;
-					else if (fullFormat.includes('natdexchampionsclassic')) set.level = 100;
+					if (fullFormat.includes('natdexchampionsmodern') || fullFormat.includes('natdexchampsmodern')) set.level = 50;
+					else if (fullFormat.includes('natdexchampionsclassic') || fullFormat.includes('natdexchampsclassic')) set.level = 100;
 					else if (baseFormat.substr(0, 9) === 'champions' || baseFormat.substr(0, 10) === 'battlespot' ||
 						baseFormat.substr(0, 3) === 'bss' || baseFormat.substr(0, 3) === 'vgc' ||
 						baseFormat.substr(0, 14) === 'battlefestival') set.level = 50;
