@@ -48,3 +48,5 @@ Thumbs.db
 .vscode/
 *.swp
 *~
+natdex-redux-fixes-v2/apply-natdex-redux-fixes-v2.mjs
+natdex-redux-fixes-v2/deploy/caddy/Caddyfile.example

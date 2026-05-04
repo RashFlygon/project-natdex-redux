@@ -1,0 +1,6 @@
+@officialRuntime path /data/graphics.js /data/pokedex-mini.js /data/pokedex-mini-bw.js /js/clean-cookies.php
+handle @officialRuntime {
+	reverse_proxy https://play.pokemonshowdown.com {
+		header_up Host play.pokemonshowdown.com
+	}
+}
