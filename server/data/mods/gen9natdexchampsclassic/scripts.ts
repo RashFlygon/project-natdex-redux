@@ -25,7 +25,7 @@ export const Scripts: ModdedBattleScriptsData = {
 	},
 	actions: {
 		canTerastallize(pokemon) {
-			return pokemon.canTerastallize || null;
+			return pokemon.teraType || null;
 		},
 	},
 };

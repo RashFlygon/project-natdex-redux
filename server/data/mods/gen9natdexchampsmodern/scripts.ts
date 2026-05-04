@@ -32,9 +32,10 @@ export const Scripts: ModdedBattleScriptsData = {
 		if (move.pp <= 15) return 16;
 		return 20;
 	},
+
 	actions: {
 		canTerastallize(pokemon) {
-			return pokemon.canTerastallize || null;
+			return pokemon.teraType || null;
 		},
 	},
 };
