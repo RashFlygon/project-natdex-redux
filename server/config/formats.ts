@@ -343,14 +343,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 	{
 		name: "[Gen 9] NatDex Champions (Modern) OU",
 		mod: 'gen9natdexchampsmodern',
-		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Max Level = 50', 'Default Level = 50'],
 		banlist: natDexChampionsSinglesBans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles",
 		mod: 'gen9natdexchampsmodern',
 		gameType: 'doubles',
-		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause', 'Adjust Level = 50'],
+		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause', 'Max Level = 50', 'Default Level = 50'],
 		banlist: natDexChampionsDoublesBans,
 	},
 	{
@@ -362,7 +362,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 100'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Species Clause', '!Evasion Clause', '!Evasion Items Clause', '!Evasion Moves Clause', '!Evasion Abilities Clause', 'Adjust Level = 100'],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Classic) Doubles Draft",
@@ -370,14 +370,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		gameType: 'doubles',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Evasion Clause', 'Adjust Level = 100'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Species Clause', '!Evasion Clause', '!Evasion Items Clause', '!Evasion Moves Clause', '!Evasion Abilities Clause', 'Adjust Level = 100'],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Draft",
 		mod: 'gen9natdexchampsmodern',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Species Clause', '!Evasion Clause', '!Evasion Items Clause', '!Evasion Moves Clause', '!Evasion Abilities Clause', 'Max Level = 50', 'Default Level = 50'],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles Draft",
@@ -385,7 +385,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		gameType: 'doubles',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Evasion Clause', 'Adjust Level = 50'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Species Clause', '!Evasion Clause', '!Evasion Items Clause', '!Evasion Moves Clause', '!Evasion Abilities Clause', 'Max Level = 50', 'Default Level = 50'],
 	},
 
 	// Unofficial Metagames
