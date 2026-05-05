@@ -37,14 +37,35 @@ export const Scripts: ModdedBattleScriptsData = {
 		canTerastallize(pokemon) {
 			const item = pokemon.getItem();
 
-			// Mega / Primal Pokémon cannot Terastallize
+			// If this Pokémon has a Mega option, it cannot Terastallize.
+			if (pokemon.canMegaEvo) return null;
+
+			// Mega / Primal Pokémon cannot Terastallize.
 			if (pokemon.species.isMega || pokemon.baseSpecies.isMega) return null;
 			if (pokemon.species.isPrimal || pokemon.baseSpecies.isPrimal) return null;
 			if (pokemon.species.name.includes('-Mega')) return null;
 			if (pokemon.species.name.includes('-Primal')) return null;
 
-			// Pokémon holding any Z-Crystal cannot Terastallize
+			// Pokémon holding its compatible Mega Stone cannot Terastallize.
+			if (
+				item.megaStone && item.megaEvolves &&
+				[
+					pokemon.species.name,
+					pokemon.species.baseSpecies,
+					pokemon.baseSpecies.name,
+					pokemon.baseSpecies.baseSpecies,
+				].includes(item.megaEvolves)
+			) {
+				return null;
+			}
+
+			// Pokémon holding any Z-Crystal cannot Terastallize.
 			if (item.zMove || item.zMoveType || item.zMoveFrom) return null;
+
+			// Terapagos should not be able to Terastallize in these formats.
+			if (pokemon.baseSpecies.baseSpecies === 'Terapagos') return null;
+			if (pokemon.species.baseSpecies === 'Terapagos') return null;
+			if (pokemon.species.name.startsWith('Terapagos')) return null;
 
 			return pokemon.teraType || null;
 		},
