@@ -2,6 +2,7 @@ export const Scripts: ModdedBattleScriptsData = {
 	inherit: 'champions',
 	gen: 9,
 	init() {},
+
 	statModify(baseStats, set, statName) {
 		const tr = this.trunc;
 		let stat = baseStats[statName];
@@ -19,40 +20,26 @@ export const Scripts: ModdedBattleScriptsData = {
 		}
 		return stat;
 	},
+
 	calculatePP(move, ppUps = 3) {
 		if (move.noPPBoosts) return move.pp;
 		return move.pp * (5 + ppUps) / 5;
 	},
-	canTerastallize(pokemon) {
-		const item = pokemon.getItem();
 
-		// If this Pokémon currently has the option to Mega Evolve,
-		// it should not also be allowed to Terastallize.
-		if (pokemon.canMegaEvo) return null;
+	actions: {
+		canTerastallize(pokemon) {
+			const item = pokemon.getItem();
 
-		// Mega / Primal Pokémon cannot Terastallize.
-		if (pokemon.species.isMega || pokemon.baseSpecies.isMega) return null;
-		if (pokemon.species.isPrimal || pokemon.baseSpecies.isPrimal) return null;
-		if (pokemon.species.name.includes('-Mega')) return null;
-		if (pokemon.species.name.includes('-Primal')) return null;
+			// Mega / Primal Pokémon cannot Terastallize
+			if (pokemon.species.isMega || pokemon.baseSpecies.isMega) return null;
+			if (pokemon.species.isPrimal || pokemon.baseSpecies.isPrimal) return null;
+			if (pokemon.species.name.includes('-Mega')) return null;
+			if (pokemon.species.name.includes('-Primal')) return null;
 
-		// Pokémon holding their compatible Mega Stone cannot Terastallize.
-		if (
-			item.megaStone && item.megaEvolves &&
-			[
-				pokemon.species.name,
-				pokemon.species.baseSpecies,
-				pokemon.baseSpecies.name,
-				pokemon.baseSpecies.baseSpecies,
-			].includes(item.megaEvolves)
-		) {
-			return null;
-		}
+			// Pokémon holding any Z-Crystal cannot Terastallize
+			if (item.zMove || item.zMoveType || item.zMoveFrom) return null;
 
-		// Pokémon holding any Z-Crystal cannot Terastallize.
-		if (item.zMove || item.zMoveType || item.zMoveFrom) return null;
-
-		return pokemon.teraType || null;
-	}
+			return pokemon.teraType || null;
+		},
+	},
 };
-
