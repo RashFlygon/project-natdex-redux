@@ -35,6 +35,11 @@ export const Scripts: ModdedBattleScriptsData = {
 
 	actions: {
 		canTerastallize(pokemon) {
+			const species = pokemon.species;
+			const item = pokemon.getItem();
+			if (species.isMega || species.isPrimal || species.baseSpecies === 'Terapagos') return null;
+			if (pokemon.canMegaEvo || item.zMove) return null;
+			if (item.megaStone?.[pokemon.baseSpecies.name] || item.megaStone?.[species.name]) return null;
 			return pokemon.teraType || null;
 		},
 	},
