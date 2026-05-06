@@ -28,17 +28,13 @@ export const Scripts: ModdedBattleScriptsData = {
 
 	actions: {
 		canTerastallize(pokemon) {
+			const species = pokemon.species;
 			const item = pokemon.getItem();
-
-			// Mega / Primal Pokémon cannot Terastallize
-			if (pokemon.species.isMega || pokemon.baseSpecies.isMega) return null;
-			if (pokemon.species.isPrimal || pokemon.baseSpecies.isPrimal) return null;
-			if (pokemon.species.name.includes('-Mega')) return null;
-			if (pokemon.species.name.includes('-Primal')) return null;
-
-			// Pokémon holding any Z-Crystal cannot Terastallize
-			if (item.zMove || item.zMoveType || item.zMoveFrom) return null;
-
+			if (species.isMega || species.isPrimal || pokemon.baseSpecies.isMega || pokemon.baseSpecies.isPrimal) return null;
+			if (species.name.includes('-Mega') || species.name.includes('-Primal')) return null;
+			if (species.baseSpecies === 'Terapagos') return null;
+			if (pokemon.canMegaEvo || item.zMove || item.zMoveType || item.zMoveFrom) return null;
+			if (item.megaStone?.[pokemon.baseSpecies.name] || item.megaStone?.[species.name]) return null;
 			return pokemon.teraType || null;
 		},
 	},
