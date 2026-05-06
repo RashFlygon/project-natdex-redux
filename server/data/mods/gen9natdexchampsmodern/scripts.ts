@@ -63,6 +63,11 @@ export const Scripts: ModdedBattleScriptsData = {
 			// Pokémon holding any Z-Crystal cannot Terastallize.
 			if (item.zMove || item.zMoveType || item.zMoveFrom) return null;
 
+			// Terapagos cannot Terastallize.
+			if (pokemon.baseSpecies.baseSpecies === 'Terapagos') return null;
+			if (pokemon.species.baseSpecies === 'Terapagos') return null;
+			if (pokemon.species.name.startsWith('Terapagos')) return null;
+
 			return pokemon.teraType || null;
 		},
 	},
