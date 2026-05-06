@@ -149,6 +149,17 @@ export class ModifiableValue {
 export class BattleTooltips {
 	battle: Battle;
 
+	private fixNatDexClassicTooltipLevel(pokemon: Pokemon | null) {
+		if (!pokemon) return;
+		if (!this.battle.tier.includes('NatDex Champions (Classic)')) return;
+
+		// If the details explicitly include a level, respect that.
+		// If no level is shown, PS normally means level 100.
+		if ((pokemon.details || '').includes(', L')) return;
+
+		if (pokemon.level === 50) pokemon.level = 100;
+	}
+
 	constructor(battle: Battle) {
 		this.battle = battle;
 	}
@@ -315,11 +326,13 @@ export class BattleTooltips {
 				let index = 1;
 				for (const otherPokemon of side.pokemon) {
 					if (otherPokemon.getBaseSpecies().baseSpecies === species) {
+						this.fixNatDexClassicTooltipLevel(otherPokemon);
 						buf += this.showPokemonTooltip(otherPokemon, null, false, index);
 						index++;
 					}
 				}
 			} else {
+				this.fixNatDexClassicTooltipLevel(pokemon);
 				buf = this.showPokemonTooltip(pokemon);
 			}
 			break;
