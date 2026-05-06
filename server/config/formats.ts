@@ -34,6 +34,16 @@ const natDexChampionsDoublesBans = [
 	'Commander', 'Dark Void', 'Swagger',
 ];
 
+const natDexChampionsModernSinglesBans = [
+	...natDexChampionsSinglesBans,
+	'Hidden Power',
+];
+
+const natDexChampionsModernDoublesBans = [
+	...natDexChampionsDoublesBans,
+	'Hidden Power',
+];
+
 const AllFormats: import('../sim/dex-formats').FormatList = [
 
 	// S/V Singles
@@ -344,14 +354,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions (Modern) OU",
 		mod: 'gen9natdexchampsmodern',
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Adjust Level = 50'],
-		banlist: natDexChampionsSinglesBans,
+		banlist: natDexChampionsModernSinglesBans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles",
 		mod: 'gen9natdexchampsmodern',
 		gameType: 'doubles',
 		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause', 'Adjust Level = 50'],
-		banlist: natDexChampionsDoublesBans,
+		banlist: natDexChampionsModernDoublesBans,
 	},
 	{
 		section: "Draft",
@@ -378,6 +388,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		banlist: natDexChampionsModernSinglesBans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles Draft",
@@ -386,6 +397,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Evasion Clause', 'Adjust Level = 50'],
+		banlist: natDexChampionsModernDoublesBans,
 	},
 
 	// Unofficial Metagames
