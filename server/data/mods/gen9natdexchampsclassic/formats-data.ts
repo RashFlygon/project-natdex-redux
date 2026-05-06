@@ -28,3 +28,11 @@ for (const id of ids) {
 		isNonstandard: usableTier(baseTier) ? baseData.isNonstandard : championsData.isNonstandard,
 	};
 }
+
+targetTable.greninjabond = {
+	...targetTable.greninja,
+	tier: "UU",
+	doublesTier: "(DUU)",
+	natDexTier: "UUBL",
+	isNonstandard: undefined,
+};

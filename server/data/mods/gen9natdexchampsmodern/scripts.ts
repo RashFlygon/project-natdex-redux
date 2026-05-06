@@ -24,6 +24,11 @@ export const Scripts: ModdedBattleScriptsData = {
 				}
 			}
 		}
+		for (const speciesId of ['deoxys', 'deoxysattack', 'deoxysdefense', 'deoxysspeed']) {
+			const entry = this.modData('Learnsets', speciesId);
+			entry.learnset ||= {};
+			entry.learnset.toxicspikes = ['8M'];
+		}
 	},
 	calculatePP(move) {
 		if (move.noPPBoosts || move.pp === 1) return move.pp;

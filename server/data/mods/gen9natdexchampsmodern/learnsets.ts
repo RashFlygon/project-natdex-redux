@@ -51,3 +51,10 @@ export const Learnsets: LearnsetTable = cloneTable(ChampionsLearnsets);
 addMissingMoves(Learnsets, BaseLearnsets);
 addMissingMoves(Learnsets, PLALearnsets);
 addMissingMoves(Learnsets, ZALearnsets);
+
+const modernLearnsets = Learnsets as StringLearnsetTable;
+for (const id of ['deoxys', 'deoxysattack', 'deoxysdefense', 'deoxysspeed']) {
+	const entry = modernLearnsets[id] || (modernLearnsets[id] = {learnset: {}});
+	entry.learnset ||= {};
+	(entry.learnset as {[moveid: string]: string[]}).toxicspikes = ['8M'];
+}
