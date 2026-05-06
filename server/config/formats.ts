@@ -362,7 +362,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 100'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Evasion Clause', 'Adjust Level = 100'],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Classic) Doubles Draft",
@@ -377,7 +377,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsmodern',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', '!Sleep Clause Mod', '!Evasion Clause', 'Adjust Level = 50'],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles Draft",
