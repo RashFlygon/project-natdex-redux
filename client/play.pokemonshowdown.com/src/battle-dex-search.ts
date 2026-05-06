@@ -940,6 +940,9 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			if (this.formatType === 'natdexchampsmoderndoubles') table = table['gen9natdexchampsmoderndoubles'];
 			let learnset = table.learnsets[learnsetid];
 			const eggMovesOnly = this.eggMovesOnly(learnsetid, speciesid);
+			if (this.formatType?.startsWith('natdexchamps') && learnset && (moveid in learnset) && !eggMovesOnly) {
+				return true;
+			}
 			if (learnset && (moveid in learnset) && (!this.format.startsWith('tradebacks') ? learnset[moveid].includes(genChar) :
 				learnset[moveid].includes(genChar) || (learnset[moveid].includes(`${gen + 1}`) && move.gen === gen)) &&
 				(!eggMovesOnly || (learnset[moveid].includes('e') && this.dex.gen === 9))
@@ -1879,6 +1882,18 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 				for (let moveid in learnset) {
 					let learnsetEntry = learnset[moveid];
 					const move = dex.moves.get(moveid);
+					if (this.formatType?.startsWith('natdexchamps')) {
+						if (move.isNonstandard && move.isNonstandard !== 'Past') continue;
+						if (moves.includes(moveid)) continue;
+						moves.push(moveid);
+						if (moveid === 'sketch') sketch = true;
+						if (moveid === 'hiddenpower') {
+							moves.push(
+								'hiddenpowerbug', 'hiddenpowerdark', 'hiddenpowerdragon', 'hiddenpowerelectric', 'hiddenpowerfighting', 'hiddenpowerfire', 'hiddenpowerflying', 'hiddenpowerghost', 'hiddenpowergrass', 'hiddenpowerground', 'hiddenpowerice', 'hiddenpowerpoison', 'hiddenpowerpsychic', 'hiddenpowerrock', 'hiddenpowersteel', 'hiddenpowerwater'
+							);
+						}
+						continue;
+					}
 					const minGenCode: { [gen: number]: string } = { 6: 'p', 7: 'q', 8: 'g', 9: 'a' };
 					if (regionBornLegality && !learnsetEntry.includes(minGenCode[dex.gen])) {
 						continue;
