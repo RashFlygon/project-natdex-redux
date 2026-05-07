@@ -1,4 +1,5 @@
 import {Learnsets as BaseLearnsets} from '../../learnsets';
+import {Scripts as ChampionsScripts} from '../champions/scripts';
 import {Learnsets as PLALearnsets} from './pla-learnsets';
 import {Learnsets as ZALearnsets} from './za-learnsets';
 
@@ -39,6 +40,7 @@ export const Scripts: ModdedBattleScriptsData = {
 	},
 
 	actions: {
+		...ChampionsScripts.actions,
 		canTerastallize(pokemon) {
 			const species = pokemon.species;
 			const item = pokemon.getItem();

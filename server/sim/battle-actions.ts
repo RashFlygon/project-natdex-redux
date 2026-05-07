@@ -1141,7 +1141,10 @@ export class BattleActions {
 			if (this.battle.gen >= 5) {
 				this.battle.runEvent('DamagingHit', damagedTargets, pokemon, move, damagedDamage);
 			}
-			if (moveData.onAfterHit && pokemon.hp) {
+			const runAfterHitAfterUserFaint =
+				(move.id === 'rapidspin' || move.id === 'mortalspin') &&
+				this.battle.format.id.includes('natdexchamps');
+			if (moveData.onAfterHit && (pokemon.hp || runAfterHitAfterUserFaint)) {
 				for (const t of damagedTargets) {
 					this.battle.singleEvent('AfterHit', moveData, {}, t, pokemon, move);
 				}

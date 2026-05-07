@@ -1,3 +1,5 @@
+import {Scripts as ChampionsScripts} from '../champions/scripts';
+
 export const Scripts: ModdedBattleScriptsData = {
 	inherit: 'champions',
 	gen: 9,
@@ -27,6 +29,7 @@ export const Scripts: ModdedBattleScriptsData = {
 	},
 
 	actions: {
+		...ChampionsScripts.actions,
 		canTerastallize(pokemon) {
 			const species = pokemon.species;
 			const item = pokemon.getItem();

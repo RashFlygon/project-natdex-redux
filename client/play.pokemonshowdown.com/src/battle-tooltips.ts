@@ -149,9 +149,14 @@ export class ModifiableValue {
 export class BattleTooltips {
 	battle: Battle;
 
-	private fixNatDexClassicTooltipLevel(pokemon: Pokemon | null) {
+	private isNatDexChampionsClassic() {
+		const tierid = toID(this.battle.tier);
+		return tierid.includes('natdexchampionsclassic') || tierid.includes('natdexchampsclassic');
+	}
+
+	private fixNatDexClassicTooltipLevel(pokemon: Pokemon | ServerPokemon | null) {
 		if (!pokemon) return;
-		if (!this.battle.tier.includes('NatDex Champions (Classic)')) return;
+		if (!this.isNatDexChampionsClassic()) return;
 
 		// If the details explicitly include a level, respect that.
 		// If no level is shown, PS normally means level 100.
@@ -310,6 +315,8 @@ export class BattleTooltips {
 			let gmaxMove = args[3] ? this.battle.dex.moves.get(args[3]) : undefined;
 			if (!pokemon) return false;
 			let serverPokemon = this.battle.myPokemon![teamIndex];
+			this.fixNatDexClassicTooltipLevel(pokemon);
+			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showMoveTooltip(move, type, pokemon, serverPokemon, gmaxMove);
 			break;
 		}
@@ -357,6 +364,8 @@ export class BattleTooltips {
 				serverPokemon = this.battle.myAllyPokemon[pokemonIndex];
 			}
 			if (!pokemon) return false;
+			this.fixNatDexClassicTooltipLevel(pokemon);
+			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showPokemonTooltip(pokemon, serverPokemon, true);
 			break;
 		}
@@ -371,6 +380,7 @@ export class BattleTooltips {
 				if (pokemon && pokemon.side === side.ally) pokemon = null;
 			} */
 			let serverPokemon = this.battle.myPokemon![activeIndex];
+			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showPokemonTooltip(pokemon, serverPokemon);
 			break;
 		}
@@ -384,6 +394,7 @@ export class BattleTooltips {
 				pokemon = side.pokemon[activeIndex] || side.ally ? side.ally.pokemon[activeIndex] : null;
 			} */
 			let serverPokemon = this.battle.myAllyPokemon ? this.battle.myAllyPokemon[activeIndex] : null;
+			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showPokemonTooltip(pokemon, serverPokemon);
 			break;
 		}
@@ -1583,6 +1594,9 @@ export class BattleTooltips {
 		}
 		let level = pokemon.volatiles.transform?.[4] || pokemon.level;
 		let tier = this.battle.tier;
+		const tierid = toID(tier);
+		const isNatDexChampionsClassic =
+			tierid.includes('natdexchampionsclassic') || tierid.includes('natdexchampsclassic');
 		let gen = this.battle.gen;
 		let isCGT = tier.includes('Computer-Generated Teams');
 		let isRandomBattle = tier.includes('Random Battle') ||
@@ -1599,7 +1613,7 @@ export class BattleTooltips {
 			max = tr(tr(tr((2 * baseSpe + maxIv) * level / 100 + 5) * maxNature) * tr((70 / 255 / 10 + 1) * 100) / 100);
 			if (tier.includes('No Restrictions')) max += 200;
 			else if (tier.includes('Random')) max += 20;
-		} else if (tier.includes('Champions')) {
+		} else if (tier.includes('Champions') && !isNatDexChampionsClassic) {
 			min = tr(minNature * (baseSpe + 20));
 			max = tr(maxNature * (baseSpe + 32 + 20));
 		} else {
