@@ -153,6 +153,18 @@ export class BattleTooltips {
 		this.battle = battle;
 	}
 
+	isNatDexChampionsClassic() {
+		const tierid = toID(this.battle.tier);
+		return tierid.includes('natdexchampionsclassic') || tierid.includes('natdexchampsclassic');
+	}
+
+	getTooltipLevel(pokemon: Pokemon | ServerPokemon) {
+		if (!this.isNatDexChampionsClassic()) return pokemon.level;
+		const levelMatch = pokemon.details?.match(/(?:^|, )L(\d+)(?:,|$)/);
+		if (levelMatch) return Number(levelMatch[1]) || pokemon.level;
+		return 100;
+	}
+
 	// tooltips
 	// Touch delay, pressing finger more than that time will cause the tooltip to open.
 	// Shorter time will cause the button to click
@@ -861,7 +873,8 @@ export class BattleTooltips {
 			name += ` <small>(${BattleLog.escapeHTML(pokemon.speciesForme)})</small>`;
 		}
 
-		let levelBuf = (pokemon.level !== 100 ? ` <small>L${pokemon.level}</small>` : ``);
+		const pokemonLevel = this.getTooltipLevel(pokemon);
+		let levelBuf = (pokemonLevel !== 100 ? ` <small>L${pokemonLevel}</small>` : ``);
 		if (!illusionIndex || illusionIndex === 1) {
 			text += `<h2>${name}${genderBuf}${illusionIndex ? '' : levelBuf}<br />`;
 
@@ -1568,7 +1581,7 @@ export class BattleTooltips {
 			if (baseSpe < 1) baseSpe = 1;
 			if (baseSpe > 255) baseSpe = 255;
 		}
-		let level = pokemon.volatiles.transform?.[4] || pokemon.level;
+		let level = pokemon.volatiles.transform?.[4] || this.getTooltipLevel(pokemon);
 		let tier = this.battle.tier;
 		const tierid = toID(tier);
 		const isNatDexChampionsClassic =

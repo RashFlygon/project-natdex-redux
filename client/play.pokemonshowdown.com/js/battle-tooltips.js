@@ -231,6 +231,18 @@ function BattleTooltips(battle){var _this=this;this.battle=void 0;this.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 clickTooltipEvent=function(e){
 if(BattleTooltips.isLocked){
 e.preventDefault();
@@ -262,7 +274,7 @@ $('#tooltipwrapper').addClass('tooltip-locking-tap');
 showTooltipEvent=function(e){
 if(BattleTooltips.isLocked)return;
 _this.showTooltip(e.currentTarget);
-};this.battle=battle;}BattleTooltips.hideTooltip=function hideTooltip(){BattleTooltips.cancelLongTap();if(!BattleTooltips.elem)return;BattleTooltips.elem.parentNode.removeChild(BattleTooltips.elem);BattleTooltips.elem=null;BattleTooltips.parentElem=null;BattleTooltips.isLocked=false;$('#tooltipwrapper').removeClass('tooltip-locked tooltip-locking-click tooltip-locking-tap');};BattleTooltips.cancelLongTap=function cancelLongTap(){if(BattleTooltips.longTapTimeout){clearTimeout(BattleTooltips.longTapTimeout);BattleTooltips.longTapTimeout=0;}$('#tooltipwrapper').removeClass('tooltip-locking-click tooltip-locking-tap');};var _proto2=BattleTooltips.prototype;_proto2.lockTooltip=function lockTooltip(){if(BattleTooltips.elem&&!BattleTooltips.isLocked){BattleTooltips.isLocked=true;if(BattleTooltips.isPressed){$(BattleTooltips.parentElem).removeClass('pressed');BattleTooltips.isPressed=false;}$('#tooltipwrapper').addClass('tooltip-locked');}};_proto2.handleTouchEnd=function handleTouchEnd(e){BattleTooltips.cancelLongTap();if(!BattleTooltips.isLocked)BattleTooltips.hideTooltip();};_proto2.listen=function listen(elem){var _this2=this;var $elem=$(elem);$elem.on('mouseover','.has-tooltip',this.showTooltipEvent);$elem.on('click','.has-tooltip',this.clickTooltipEvent);$elem.on('focus','.has-tooltip',this.showTooltipEvent);$elem.on('mouseout','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mousedown','.has-tooltip',this.holdLockTooltipEvent);$elem.on('blur','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mouseup','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchstart','.has-tooltip',function(e){e.preventDefault();_this2.holdLockTooltipEvent(e);if(!BattleTooltips.parentElem){BattleTooltips.parentElem=e.currentTarget;}$(BattleTooltips.parentElem).addClass('pressed');BattleTooltips.isPressed=true;});$elem.on('touchend','.has-tooltip',function(e){e.preventDefault();if(e.currentTarget===BattleTooltips.parentElem&&BattleTooltips.isPressed){BattleTooltips.parentElem.click();}BattleTooltips.unshowTooltip();});$elem.on('touchleave','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchcancel','.has-tooltip',BattleTooltips.unshowTooltip);};BattleTooltips.
+};this.battle=battle;}var _proto2=BattleTooltips.prototype;_proto2.isNatDexChampionsClassic=function isNatDexChampionsClassic(){var tierid=toID(this.battle.tier);return tierid.includes('natdexchampionsclassic')||tierid.includes('natdexchampsclassic');};_proto2.getTooltipLevel=function getTooltipLevel(pokemon){var _pokemon$details;if(!this.isNatDexChampionsClassic())return pokemon.level;var levelMatch=(_pokemon$details=pokemon.details)==null?void 0:_pokemon$details.match(/(?:^|, )L(\d+)(?:,|$)/);if(levelMatch)return Number(levelMatch[1])||pokemon.level;return 100;};BattleTooltips.hideTooltip=function hideTooltip(){BattleTooltips.cancelLongTap();if(!BattleTooltips.elem)return;BattleTooltips.elem.parentNode.removeChild(BattleTooltips.elem);BattleTooltips.elem=null;BattleTooltips.parentElem=null;BattleTooltips.isLocked=false;$('#tooltipwrapper').removeClass('tooltip-locked tooltip-locking-click tooltip-locking-tap');};BattleTooltips.cancelLongTap=function cancelLongTap(){if(BattleTooltips.longTapTimeout){clearTimeout(BattleTooltips.longTapTimeout);BattleTooltips.longTapTimeout=0;}$('#tooltipwrapper').removeClass('tooltip-locking-click tooltip-locking-tap');};_proto2.lockTooltip=function lockTooltip(){if(BattleTooltips.elem&&!BattleTooltips.isLocked){BattleTooltips.isLocked=true;if(BattleTooltips.isPressed){$(BattleTooltips.parentElem).removeClass('pressed');BattleTooltips.isPressed=false;}$('#tooltipwrapper').addClass('tooltip-locked');}};_proto2.handleTouchEnd=function handleTouchEnd(e){BattleTooltips.cancelLongTap();if(!BattleTooltips.isLocked)BattleTooltips.hideTooltip();};_proto2.listen=function listen(elem){var _this2=this;var $elem=$(elem);$elem.on('mouseover','.has-tooltip',this.showTooltipEvent);$elem.on('click','.has-tooltip',this.clickTooltipEvent);$elem.on('focus','.has-tooltip',this.showTooltipEvent);$elem.on('mouseout','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mousedown','.has-tooltip',this.holdLockTooltipEvent);$elem.on('blur','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mouseup','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchstart','.has-tooltip',function(e){e.preventDefault();_this2.holdLockTooltipEvent(e);if(!BattleTooltips.parentElem){BattleTooltips.parentElem=e.currentTarget;}$(BattleTooltips.parentElem).addClass('pressed');BattleTooltips.isPressed=true;});$elem.on('touchend','.has-tooltip',function(e){e.preventDefault();if(e.currentTarget===BattleTooltips.parentElem&&BattleTooltips.isPressed){BattleTooltips.parentElem.click();}BattleTooltips.unshowTooltip();});$elem.on('touchleave','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchcancel','.has-tooltip',BattleTooltips.unshowTooltip);};BattleTooltips.
 
 
 
@@ -861,7 +873,8 @@ if(pokemon.speciesForme!==nickname){
 name+=" <small>("+BattleLog.escapeHTML(pokemon.speciesForme)+")</small>";
 }
 
-var levelBuf=pokemon.level!==100?" <small>L"+pokemon.level+"</small>":"";
+var pokemonLevel=this.getTooltipLevel(pokemon);
+var levelBuf=pokemonLevel!==100?" <small>L"+pokemonLevel+"</small>":"";
 if(!illusionIndex||illusionIndex===1){
 text+="<h2>"+name+genderBuf+(illusionIndex?'':levelBuf)+"<br />";
 
@@ -1568,7 +1581,7 @@ baseSpe*=2;
 if(baseSpe<1)baseSpe=1;
 if(baseSpe>255)baseSpe=255;
 }
-var level=((_pokemon$volatiles$tr=pokemon.volatiles.transform)==null?void 0:_pokemon$volatiles$tr[4])||pokemon.level;
+var level=((_pokemon$volatiles$tr=pokemon.volatiles.transform)==null?void 0:_pokemon$volatiles$tr[4])||this.getTooltipLevel(pokemon);
 var tier=this.battle.tier;
 var tierid=toID(tier);
 var isNatDexChampionsClassic=
