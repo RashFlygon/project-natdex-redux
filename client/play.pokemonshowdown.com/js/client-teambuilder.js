@@ -3650,7 +3650,6 @@
 				if (!baseFormat) baseFormat = 'ou';
 				if (this.curTeam && this.curTeam.format) {
 					if (fullFormat.includes('natdexchampionsmodern') || fullFormat.includes('natdexchampsmodern')) set.level = 50;
-					else if (fullFormat.includes('natdexchampionsclassic') || fullFormat.includes('natdexchampsclassic')) set.level = 100;
 					else if (baseFormat.substr(0, 9) === 'champions' || baseFormat.substr(0, 10) === 'battlespot' ||
 						baseFormat.substr(0, 3) === 'bss' || baseFormat.substr(0, 3) === 'vgc' ||
 						baseFormat.substr(0, 14) === 'battlefestival') set.level = 50;

@@ -149,22 +149,6 @@ export class ModifiableValue {
 export class BattleTooltips {
 	battle: Battle;
 
-	private isNatDexChampionsClassic() {
-		const tierid = toID(this.battle.tier);
-		return tierid.includes('natdexchampionsclassic') || tierid.includes('natdexchampsclassic');
-	}
-
-	private fixNatDexClassicTooltipLevel(pokemon: Pokemon | ServerPokemon | null) {
-		if (!pokemon) return;
-		if (!this.isNatDexChampionsClassic()) return;
-
-		// If the details explicitly include a level, respect that.
-		// If no level is shown, PS normally means level 100.
-		if ((pokemon.details || '').includes(', L')) return;
-
-		if (pokemon.level === 50) pokemon.level = 100;
-	}
-
 	constructor(battle: Battle) {
 		this.battle = battle;
 	}
@@ -315,8 +299,6 @@ export class BattleTooltips {
 			let gmaxMove = args[3] ? this.battle.dex.moves.get(args[3]) : undefined;
 			if (!pokemon) return false;
 			let serverPokemon = this.battle.myPokemon![teamIndex];
-			this.fixNatDexClassicTooltipLevel(pokemon);
-			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showMoveTooltip(move, type, pokemon, serverPokemon, gmaxMove);
 			break;
 		}
@@ -333,13 +315,11 @@ export class BattleTooltips {
 				let index = 1;
 				for (const otherPokemon of side.pokemon) {
 					if (otherPokemon.getBaseSpecies().baseSpecies === species) {
-						this.fixNatDexClassicTooltipLevel(otherPokemon);
 						buf += this.showPokemonTooltip(otherPokemon, null, false, index);
 						index++;
 					}
 				}
 			} else {
-				this.fixNatDexClassicTooltipLevel(pokemon);
 				buf = this.showPokemonTooltip(pokemon);
 			}
 			break;
@@ -364,8 +344,6 @@ export class BattleTooltips {
 				serverPokemon = this.battle.myAllyPokemon[pokemonIndex];
 			}
 			if (!pokemon) return false;
-			this.fixNatDexClassicTooltipLevel(pokemon);
-			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showPokemonTooltip(pokemon, serverPokemon, true);
 			break;
 		}
@@ -380,7 +358,6 @@ export class BattleTooltips {
 				if (pokemon && pokemon.side === side.ally) pokemon = null;
 			} */
 			let serverPokemon = this.battle.myPokemon![activeIndex];
-			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showPokemonTooltip(pokemon, serverPokemon);
 			break;
 		}
@@ -394,7 +371,6 @@ export class BattleTooltips {
 				pokemon = side.pokemon[activeIndex] || side.ally ? side.ally.pokemon[activeIndex] : null;
 			} */
 			let serverPokemon = this.battle.myAllyPokemon ? this.battle.myAllyPokemon[activeIndex] : null;
-			this.fixNatDexClassicTooltipLevel(serverPokemon);
 			buf = this.showPokemonTooltip(pokemon, serverPokemon);
 			break;
 		}

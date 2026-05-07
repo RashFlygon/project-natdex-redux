@@ -149,22 +149,6 @@ return valueString+this.comment.join('');
 BattleTooltips=function(){
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function BattleTooltips(battle){var _this=this;this.battle=void 0;this.
 
 
@@ -278,7 +262,7 @@ $('#tooltipwrapper').addClass('tooltip-locking-tap');
 showTooltipEvent=function(e){
 if(BattleTooltips.isLocked)return;
 _this.showTooltip(e.currentTarget);
-};this.battle=battle;}var _proto2=BattleTooltips.prototype;_proto2.isNatDexChampionsClassic=function isNatDexChampionsClassic(){var tierid=toID(this.battle.tier);return tierid.includes('natdexchampionsclassic')||tierid.includes('natdexchampsclassic');};_proto2.fixNatDexClassicTooltipLevel=function fixNatDexClassicTooltipLevel(pokemon){if(!pokemon)return;if(!this.isNatDexChampionsClassic())return;if((pokemon.details||'').includes(', L'))return;if(pokemon.level===50)pokemon.level=100;};BattleTooltips.hideTooltip=function hideTooltip(){BattleTooltips.cancelLongTap();if(!BattleTooltips.elem)return;BattleTooltips.elem.parentNode.removeChild(BattleTooltips.elem);BattleTooltips.elem=null;BattleTooltips.parentElem=null;BattleTooltips.isLocked=false;$('#tooltipwrapper').removeClass('tooltip-locked tooltip-locking-click tooltip-locking-tap');};BattleTooltips.cancelLongTap=function cancelLongTap(){if(BattleTooltips.longTapTimeout){clearTimeout(BattleTooltips.longTapTimeout);BattleTooltips.longTapTimeout=0;}$('#tooltipwrapper').removeClass('tooltip-locking-click tooltip-locking-tap');};_proto2.lockTooltip=function lockTooltip(){if(BattleTooltips.elem&&!BattleTooltips.isLocked){BattleTooltips.isLocked=true;if(BattleTooltips.isPressed){$(BattleTooltips.parentElem).removeClass('pressed');BattleTooltips.isPressed=false;}$('#tooltipwrapper').addClass('tooltip-locked');}};_proto2.handleTouchEnd=function handleTouchEnd(e){BattleTooltips.cancelLongTap();if(!BattleTooltips.isLocked)BattleTooltips.hideTooltip();};_proto2.listen=function listen(elem){var _this2=this;var $elem=$(elem);$elem.on('mouseover','.has-tooltip',this.showTooltipEvent);$elem.on('click','.has-tooltip',this.clickTooltipEvent);$elem.on('focus','.has-tooltip',this.showTooltipEvent);$elem.on('mouseout','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mousedown','.has-tooltip',this.holdLockTooltipEvent);$elem.on('blur','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mouseup','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchstart','.has-tooltip',function(e){e.preventDefault();_this2.holdLockTooltipEvent(e);if(!BattleTooltips.parentElem){BattleTooltips.parentElem=e.currentTarget;}$(BattleTooltips.parentElem).addClass('pressed');BattleTooltips.isPressed=true;});$elem.on('touchend','.has-tooltip',function(e){e.preventDefault();if(e.currentTarget===BattleTooltips.parentElem&&BattleTooltips.isPressed){BattleTooltips.parentElem.click();}BattleTooltips.unshowTooltip();});$elem.on('touchleave','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchcancel','.has-tooltip',BattleTooltips.unshowTooltip);};BattleTooltips.
+};this.battle=battle;}BattleTooltips.hideTooltip=function hideTooltip(){BattleTooltips.cancelLongTap();if(!BattleTooltips.elem)return;BattleTooltips.elem.parentNode.removeChild(BattleTooltips.elem);BattleTooltips.elem=null;BattleTooltips.parentElem=null;BattleTooltips.isLocked=false;$('#tooltipwrapper').removeClass('tooltip-locked tooltip-locking-click tooltip-locking-tap');};BattleTooltips.cancelLongTap=function cancelLongTap(){if(BattleTooltips.longTapTimeout){clearTimeout(BattleTooltips.longTapTimeout);BattleTooltips.longTapTimeout=0;}$('#tooltipwrapper').removeClass('tooltip-locking-click tooltip-locking-tap');};var _proto2=BattleTooltips.prototype;_proto2.lockTooltip=function lockTooltip(){if(BattleTooltips.elem&&!BattleTooltips.isLocked){BattleTooltips.isLocked=true;if(BattleTooltips.isPressed){$(BattleTooltips.parentElem).removeClass('pressed');BattleTooltips.isPressed=false;}$('#tooltipwrapper').addClass('tooltip-locked');}};_proto2.handleTouchEnd=function handleTouchEnd(e){BattleTooltips.cancelLongTap();if(!BattleTooltips.isLocked)BattleTooltips.hideTooltip();};_proto2.listen=function listen(elem){var _this2=this;var $elem=$(elem);$elem.on('mouseover','.has-tooltip',this.showTooltipEvent);$elem.on('click','.has-tooltip',this.clickTooltipEvent);$elem.on('focus','.has-tooltip',this.showTooltipEvent);$elem.on('mouseout','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mousedown','.has-tooltip',this.holdLockTooltipEvent);$elem.on('blur','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mouseup','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchstart','.has-tooltip',function(e){e.preventDefault();_this2.holdLockTooltipEvent(e);if(!BattleTooltips.parentElem){BattleTooltips.parentElem=e.currentTarget;}$(BattleTooltips.parentElem).addClass('pressed');BattleTooltips.isPressed=true;});$elem.on('touchend','.has-tooltip',function(e){e.preventDefault();if(e.currentTarget===BattleTooltips.parentElem&&BattleTooltips.isPressed){BattleTooltips.parentElem.click();}BattleTooltips.unshowTooltip();});$elem.on('touchleave','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchcancel','.has-tooltip',BattleTooltips.unshowTooltip);};BattleTooltips.
 
 
 
@@ -315,8 +299,6 @@ teamIndex+this.battle.pokemonControlled*Math.floor(this.battle.mySide.n/2)];
 var gmaxMove=args[3]?this.battle.dex.moves.get(args[3]):undefined;
 if(!pokemon)return false;
 var serverPokemon=this.battle.myPokemon[teamIndex];
-this.fixNatDexClassicTooltipLevel(pokemon);
-this.fixNatDexClassicTooltipLevel(serverPokemon);
 buf=this.showMoveTooltip(move,type,pokemon,serverPokemon,gmaxMove);
 break;
 }
@@ -333,13 +315,11 @@ var species=_pokemon.getBaseSpecies().baseSpecies;
 var index=1;for(var _i6=0,_side$pokemon2=
 side.pokemon;_i6<_side$pokemon2.length;_i6++){var otherPokemon=_side$pokemon2[_i6];
 if(otherPokemon.getBaseSpecies().baseSpecies===species){
-this.fixNatDexClassicTooltipLevel(otherPokemon);
 buf+=this.showPokemonTooltip(otherPokemon,null,false,index);
 index++;
 }
 }
 }else{
-this.fixNatDexClassicTooltipLevel(_pokemon);
 buf=this.showPokemonTooltip(_pokemon);
 }
 break;
@@ -364,8 +344,6 @@ if(_side===this.battle.mySide.ally&&this.battle.myAllyPokemon){
 _serverPokemon=this.battle.myAllyPokemon[pokemonIndex];
 }
 if(!_pokemon2)return false;
-this.fixNatDexClassicTooltipLevel(_pokemon2);
-this.fixNatDexClassicTooltipLevel(_serverPokemon);
 buf=this.showPokemonTooltip(_pokemon2,_serverPokemon,true);
 break;
 }
@@ -380,7 +358,6 @@ var _pokemon3=null;
 
 
 var _serverPokemon2=this.battle.myPokemon[_activeIndex];
-this.fixNatDexClassicTooltipLevel(_serverPokemon2);
 buf=this.showPokemonTooltip(_pokemon3,_serverPokemon2);
 break;
 }
@@ -394,7 +371,6 @@ var _pokemon4=null;
 
 
 var _serverPokemon3=this.battle.myAllyPokemon?this.battle.myAllyPokemon[_activeIndex2]:null;
-this.fixNatDexClassicTooltipLevel(_serverPokemon3);
 buf=this.showPokemonTooltip(_pokemon4,_serverPokemon3);
 break;
 }

@@ -340,14 +340,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 	{
 		name: "[Gen 9] NatDex Champions (Classic) OU",
 		mod: 'gen9natdexchampsclassic',
-		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Adjust Level = 100'],
+		ruleset: ['Standard NatDex', 'Tera Type Preview'],
 		banlist: natDexChampionsSinglesBans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Classic) Doubles",
 		mod: 'gen9natdexchampsclassic',
 		gameType: 'doubles',
-		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause', 'Adjust Level = 100'],
+		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause'],
 		banlist: natDexChampionsDoublesBans,
 	},
 	{
@@ -372,7 +372,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 100'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Classic) Doubles Draft",
@@ -380,7 +380,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		gameType: 'doubles',
 		searchShow: false,
 		itemClauseDefault: true,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 100'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Draft",
