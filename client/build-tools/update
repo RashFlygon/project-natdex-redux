@@ -199,9 +199,25 @@ let stdout = '';
 let newsid = 0;
 let news = '[failed to retrieve news]';
 try {
-	stdout = child_process.execSync('php ' + path.resolve(thisDir, 'news-embed.php'), {
-		stdio: 'pipe',
-	});
+	const localNewsPath = 'play.pokemonshowdown.com/news.json';
+	if (fs.existsSync(localNewsPath)) {
+		const posts = JSON.parse(fs.readFileSync(localNewsPath, UTF8));
+		newsid = posts[0]?.id || 0;
+		news = posts.slice(0, 2).map(post => {
+			let buf = `<div class="newsentry" data-newsid="${post.id || 0}">`;
+			if (post.title) buf += `<h4>${post.title}</h4>`;
+			if (post.summaryHTML) buf += `<p>${post.summaryHTML}</p>`;
+			buf += '<p>';
+			if (post.author) buf += `&mdash;<strong>${post.author}</strong>`;
+			if (post.date) buf += `<small class="date"> on ${new Date(post.date * 1000).toDateString()}</small>`;
+			buf += '</p></div>';
+			return buf;
+		}).join('\n');
+	} else {
+		stdout = child_process.execSync('php ' + path.resolve(thisDir, 'news-embed.php'), {
+			stdio: 'pipe',
+		});
+	}
 } catch (e) {
 	console.log("git hook failed to retrieve news (exec command failed):\n" + (e.error + e.stderr + e.stdout));
 }
