@@ -3515,7 +3515,11 @@ export class Battle {
 			if (this.tier.includes(`Legends`)) {
 				this.dex = Dex.mod('gen9legendsou' as ID);
 			}
-			if (this.tier.includes(`Champions`)) {
+			if (this.tier.includes(`NatDex Champions (Classic)`)) {
+				this.dex = Dex.mod('gen9natdexchampsclassic' as ID);
+			} else if (this.tier.includes(`NatDex Champions (Modern)`)) {
+				this.dex = Dex.mod('gen9natdexchampsmodern' as ID);
+			} else if (this.tier.includes(`Champions`)) {
 				this.dex = Dex.mod('champions' as ID);
 			}
 			this.log(args);

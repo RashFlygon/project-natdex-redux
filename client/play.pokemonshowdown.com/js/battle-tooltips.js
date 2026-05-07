@@ -2875,7 +2875,8 @@ this.dex.gen<3||
 this.formatid.includes('metronomebattle')||
 this.formatid.endsWith('norestrictions');
 
-this.useStatPoints=this.formatid.includes('champions');
+this.useStatPoints=this.formatid.includes('champions')&&
+!this.formatid.includes('natdexchampionsclassic')&&!this.formatid.includes('natdexchampsclassic');
 this.supportsEVs=!this.formatid.includes('letsgo')&&!this.useStatPoints;
 this.supportsAVs=!this.supportsEVs&&this.formatid.endsWith('norestrictions');
 }var _proto3=BattleStatGuesser.prototype;_proto3.
@@ -3480,7 +3481,8 @@ dex.gen<3||
 (formatid.endsWith('hackmons')||formatid.endsWith('bh'))&&dex.gen!==6||
 formatid.includes('metronomebattle')||formatid.endsWith('norestrictions');
 
-var useStatPoints=formatid.includes('champions');
+var useStatPoints=formatid.includes('champions')&&
+!formatid.includes('natdexchampionsclassic')&&!formatid.includes('natdexchampsclassic');
 var supportsEVs=!formatid.includes('letsgo')&&!useStatPoints;
 if(!(useStatPoints||supportsEVs)||ignoreEVLimits)return null;
 

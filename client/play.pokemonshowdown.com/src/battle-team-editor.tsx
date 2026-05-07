@@ -114,7 +114,7 @@ export class TeamEditorState extends PSModel {
 		}
 
 		this.defaultLevel = 100;
-		if (formatid.includes('natdexchampionsclassic')) {
+		if (formatid.includes('natdexchampionsclassic') || formatid.includes('natdexchampsclassic')) {
 			this.defaultLevel = 100;
 		} else if (
 			formatid.includes('vgc') || formatid.includes('bss') || formatid.includes('ultrasinnohclassic') ||

@@ -2875,7 +2875,8 @@ export class BattleStatGuesser {
 			this.formatid.includes('metronomebattle') ||
 			this.formatid.endsWith('norestrictions')
 		);
-		this.useStatPoints = this.formatid.includes('champions');
+		this.useStatPoints = this.formatid.includes('champions') &&
+			!this.formatid.includes('natdexchampionsclassic') && !this.formatid.includes('natdexchampsclassic');
 		this.supportsEVs = !this.formatid.includes('letsgo') && !this.useStatPoints;
 		this.supportsAVs = !this.supportsEVs && this.formatid.endsWith('norestrictions');
 	}
@@ -3480,7 +3481,8 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 		((formatid.endsWith('hackmons') || formatid.endsWith('bh')) && dex.gen !== 6) ||
 		formatid.includes('metronomebattle') || formatid.endsWith('norestrictions')
 	);
-	const useStatPoints = formatid.includes('champions');
+	const useStatPoints = formatid.includes('champions') &&
+		!formatid.includes('natdexchampionsclassic') && !formatid.includes('natdexchampsclassic');
 	const supportsEVs = !formatid.includes('letsgo') && !useStatPoints;
 	if (!(useStatPoints || supportsEVs) || ignoreEVLimits) return null;
 
