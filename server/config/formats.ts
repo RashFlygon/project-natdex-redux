@@ -340,7 +340,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 	{
 		name: "[Gen 9] NatDex Champions (Classic) OU",
 		mod: 'gen9natdexchampsclassic',
-		ruleset: ['Standard NatDex', 'Tera Type Preview'],
+		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
 		banlist: natDexChampionsSinglesBans,
 	},
 	{
@@ -353,7 +353,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 	{
 		name: "[Gen 9] NatDex Champions (Modern) OU",
 		mod: 'gen9natdexchampsmodern',
-		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesBans,
 	},
 	{

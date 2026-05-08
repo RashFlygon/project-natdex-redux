@@ -35,7 +35,6 @@ export const Scripts: ModdedBattleScriptsData = {
 			const item = pokemon.getItem();
 			if (species.isMega || species.isPrimal || pokemon.baseSpecies.isMega || pokemon.baseSpecies.isPrimal) return null;
 			if (species.name.includes('-Mega') || species.name.includes('-Primal')) return null;
-			if (species.baseSpecies === 'Terapagos') return null;
 			if (pokemon.canMegaEvo || item.zMove || item.zMoveType || item.zMoveFrom) return null;
 			if (item.megaStone?.[pokemon.baseSpecies.name] || item.megaStone?.[species.name]) return null;
 			return pokemon.teraType || null;

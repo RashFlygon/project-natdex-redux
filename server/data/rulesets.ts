@@ -1622,6 +1622,19 @@ export const Rulesets: import('../sim/dex-formats').FormatDataTable = {
 			this.add('rule', 'Terastal Clause: You cannot Terastallize');
 		},
 	},
+	terapagosterastalclause: {
+		effectType: 'Rule',
+		name: 'Terapagos Terastal Clause',
+		desc: "Prevents Terapagos from Terastallizing",
+		onBegin() {
+			for (const pokemon of this.getAllPokemon()) {
+				if (pokemon.species.baseSpecies === 'Terapagos') {
+					pokemon.canTerastallize = null;
+				}
+			}
+			this.add('rule', 'Terapagos Terastal Clause: Terapagos cannot Terastallize');
+		},
+	},
 	fullarceusclause: {
 		effectType: 'ValidatorRule',
 		name: 'Full Arceus Clause',
