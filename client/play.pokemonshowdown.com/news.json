@@ -1,9 +1,16 @@
 [
   {
     "id": 1,
-    "title": "Welcome to Champs Natdex!",
-    "summaryHTML": "Welcome to Champs Natdex!",
+    "title": "Welcome to Champions Natdex!",
+    "summaryHTML": "Welcome to Champions Natdex!",
     "author": "Rasche",
     "date": 1778112000
+  },
+  {
+    "id": 2,
+    "title": "Classic and Modern formats",
+    "summaryHTML": "<p><strong>Classic</strong> uses a USUM-style base with Level 100 play, EVs/IVs, standard PP, Champions ability/move/status mechanics, and legacy NatDex movesets without PLA or Z-A additions.</p><p><strong>Modern</strong> uses a Champions base with Level 50 play, Stat Points, 31 IV lock, Champions ability/move/status mechanics, 8/12/16/20 PP, and PLA/Z-A move additions legalised.</p>",
+    "author": "Rasche",
+    "date": 1778198400
   }
 ]

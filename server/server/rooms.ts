@@ -1867,10 +1867,9 @@ export class GlobalRoomState {
 		const devRoom = Rooms.get('development');
 		if (devRoom) {
 			devRoom.add(crashMessage).update();
-		} else {
-			Rooms.lobby?.add(crashMessage).update();
-			Rooms.get('staff')?.add(crashMessage).update();
 		}
+		const staffRoom = Rooms.get('staff');
+		if (staffRoom && staffRoom !== devRoom) staffRoom.add(crashMessage).update();
 		if (privateCrashMessage) {
 			upperStaffRoom!.add(privateCrashMessage).update();
 		}
