@@ -14,6 +14,11 @@
 		return 100;
 	}
 
+	function isNatDexChampionsClassicFormat(format) {
+		return (format.includes('natdexchampions') || format.includes('natdexchamps')) &&
+			!format.includes('natdexchampionsmodern') && !format.includes('natdexchampsmodern');
+	}
+
 	function setNatDexChampionsTeamMod(team) {
 		if (!team) return '';
 		var mod = getNatDexChampionsMod(team.format || '');
@@ -3653,7 +3658,7 @@
 				if (this.curTeam && this.curTeam.format) {
 					if (fullFormat.includes('natdexchampionsmodern') || fullFormat.includes('natdexchampsmodern')) set.level = 50;
 					else if (
-						(!fullFormat.includes('natdexchampionsclassic') && !fullFormat.includes('natdexchampsclassic') &&
+						(!isNatDexChampionsClassicFormat(fullFormat) &&
 						baseFormat.substr(0, 9) === 'champions') || baseFormat.substr(0, 10) === 'battlespot' ||
 						baseFormat.substr(0, 3) === 'bss' || baseFormat.substr(0, 3) === 'vgc' ||
 						baseFormat.substr(0, 14) === 'battlefestival') set.level = 50;
