@@ -18,13 +18,19 @@ The column value will be ignored for repeat sections.
 */
 
 const natDexChampionsSinglesBans = [
-	'Arceus', 'Calyrex-Ice', 'Calyrex-Shadow', 'Deoxys-Attack', 'Dialga', 'Dialga-Origin', 'Eternatus',
-	'Giratina', 'Giratina-Origin', 'Groudon', 'Groudon-Primal', 'Ho-Oh', 'Koraidon', 'Kyogre',
-	'Kyogre-Primal', 'Kyurem-White', 'Lugia', 'Lunala', 'Mewtwo', 'Mewtwo-Mega-X', 'Mewtwo-Mega-Y',
-	'Miraidon', 'Necrozma-Dawn-Wings', 'Necrozma-Dusk-Mane', 'Necrozma-Ultra', 'Palkia', 'Palkia-Origin',
-	'Rayquaza', 'Rayquaza-Mega', 'Reshiram', 'Solgaleo', 'Xerneas', 'Yveltal', 'Zacian',
-	'Zacian-Crowned', 'Zekrom', 'Zygarde-Complete',
-	'Arena Trap', 'Moody', 'Power Construct', 'Shadow Tag', 'King\'s Rock', 'Quick Claw', 'Razor Fang',
+	'Annihilape', 'Arceus', 'Baxcalibur', 'Calyrex-Ice', 'Calyrex-Shadow', 'Chi-Yu', 'Chien-Pao',
+	'Deoxys', 'Deoxys-Attack', 'Dialga', 'Dialga-Origin', 'Dracovish', 'Espathra', 'Eternatus',
+	'Flutter Mane', 'Giratina', 'Giratina-Origin', 'Gouging Fire', 'Groudon', 'Groudon-Primal',
+	'Ho-Oh', 'Iron Bundle', 'Koraidon', 'Kyogre', 'Kyogre-Primal', 'Kyurem-Black', 'Kyurem-White',
+	'Lugia', 'Lunala', 'Magearna', 'Marshadow', 'Mewtwo', 'Mewtwo-Mega-X', 'Mewtwo-Mega-Y',
+	'Miraidon', 'Naganadel', 'Necrozma-Dawn-Wings', 'Necrozma-Dusk-Mane', 'Necrozma-Ultra',
+	'Ogerpon-Hearthflame', 'Palafin', 'Palkia', 'Palkia-Origin', 'Pheromosa', 'Rayquaza',
+	'Rayquaza-Mega', 'Reshiram', 'Roaring Moon', 'Salamence-Mega', 'Shaymin-Sky', 'Sneasler',
+	'Solgaleo', 'Spectrier', 'Ursaluna-Bloodmoon', 'Xerneas', 'Yveltal', 'Zacian',
+	'Zacian-Crowned', 'Zamazenta-Crowned', 'Zekrom', 'Zygarde', 'Zygarde-Complete',
+	'Arena Trap', 'Moody', 'Power Construct', 'Shadow Tag', 'Blastoisinite', 'Blazikenite',
+	'Bright Powder', 'Gengarite', 'Kangaskhanite', 'King\'s Rock', 'Lax Incense', 'Lucarionite',
+	'Metagrossite', 'Quick Claw', 'Razor Fang', 'Salamencite',
 	'Assist', 'Baton Pass', 'Last Respects', 'Shed Tail',
 ];
 
