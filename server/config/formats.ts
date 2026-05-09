@@ -34,6 +34,11 @@ const natDexChampionsSinglesBans = [
 	'Assist', 'Baton Pass', 'Last Respects', 'Shed Tail',
 ];
 
+const natDexChampionsSinglesTestingUnbans = [
+	'Darkrai', 'Walking Wake', 'Deoxys-Speed', 'Urshifu', 'Genesect', 'Dragapult',
+	'Darmanitan-Galar', 'Landorus',
+];
+
 const natDexChampionsDoublesBans = [
 	...natDexChampionsSinglesBans,
 	'Shedinja', 'Terapagos', 'Urshifu-Single-Strike', 'Urshifu-Rapid-Strike', 'Stakataka',
@@ -348,6 +353,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
 		banlist: natDexChampionsSinglesBans,
+		unbanlist: natDexChampionsSinglesTestingUnbans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Classic) Doubles",
@@ -361,6 +367,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsmodern',
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesBans,
+		unbanlist: natDexChampionsSinglesTestingUnbans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles",
