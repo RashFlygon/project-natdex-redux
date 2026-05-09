@@ -29,8 +29,8 @@ const natDexChampionsSinglesBans = [
 	'Solgaleo', 'Spectrier', 'Ursaluna-Bloodmoon', 'Xerneas', 'Yveltal', 'Zacian',
 	'Zacian-Crowned', 'Zamazenta-Crowned', 'Zekrom', 'Zygarde', 'Zygarde-Complete',
 	'Arena Trap', 'Moody', 'Power Construct', 'Shadow Tag', 'Blastoisinite', 'Blazikenite',
-	'Bright Powder', 'Gengarite', 'Kangaskhanite', 'King\'s Rock', 'Lax Incense', 'Lucarionite',
-	'Metagrossite', 'Quick Claw', 'Razor Fang', 'Salamencite',
+	'Gengarite', 'Kangaskhanite', 'King\'s Rock', 'Lucarionite', 'Metagrossite', 'Quick Claw',
+	'Razor Fang', 'Salamencite',
 	'Assist', 'Baton Pass', 'Last Respects', 'Shed Tail',
 ];
 
