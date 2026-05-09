@@ -309,6 +309,10 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const isNatDexChampionsClassic = Math.abs(genIdent) === 9.671;
 		const isNatDexChampionsModern = Math.abs(genIdent) === 9.672;
 		const isNatDexChampions = isNatDexChampionsClassic || isNatDexChampionsModern;
+		const natDexChampionsOUTestUnbans = new Set([
+			'darkrai', 'walkingwake', 'deoxysspeed', 'urshifu',
+			'genesect', 'dragapult', 'darmanitangalar', 'landorus',
+		]);
 		const genNum = Math.floor(isDoubles ? -genIdent : genIdent);
 		const isBW1 = genIdent === 5.1;
 		const isRS = genIdent === 3.1;
@@ -443,6 +447,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 				if (isNatDexChampions) {
 					if (species.isNonstandard && !['Past', 'Unobtainable'].includes(species.isNonstandard)) return 'Illegal';
+					if (!isDoubles && natDexChampionsOUTestUnbans.has(species.id)) return 'OU';
 					return species.natDexTier || species.tier;
 				}
 				return species.tier;
