@@ -36,8 +36,18 @@ const natDexChampionsSinglesBans = [
 
 const natDexChampionsSinglesTestingUnbans = [
 	'Darkrai', 'Walking Wake', 'Deoxys-Speed', 'Urshifu', 'Genesect', 'Dragapult',
-	'Darmanitan-Galar', 'Landorus',
+	'Darmanitan-Galar', 'Landorus', 'Alakazam-Mega', 'Alakazite',
 ];
+
+const validateNatDexChampionsSet = function (this: any, set: any) {
+	if (
+		this.toID(set.species).startsWith('greninja') &&
+		this.toID(set.ability) === 'battlebond' &&
+		this.toID(set.item) === 'greninjaite'
+	) {
+		return [`Greninja with Battle Bond cannot hold Greninjaite.`];
+	}
+};
 
 const natDexChampionsDoublesBans = [
 	...natDexChampionsSinglesBans,
@@ -349,51 +359,66 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		section: "NatDex Champions",
 	},
 	{
-		name: "[Gen 9] NatDex Champions (Classic) OU",
+		name: "[Gen 9] NatDex Champions OU",
 		mod: 'gen9natdexchampsclassic',
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
 		banlist: natDexChampionsSinglesBans,
 		unbanlist: natDexChampionsSinglesTestingUnbans,
+		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
-		name: "[Gen 9] NatDex Champions (Classic) Doubles",
+		name: "[Gen 9] NatDex Champions Doubles",
 		mod: 'gen9natdexchampsclassic',
 		gameType: 'doubles',
 		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause'],
 		banlist: natDexChampionsDoublesBans,
+		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		section: "NatDex Champions Modern",
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) OU",
 		mod: 'gen9natdexchampsmodern',
+		searchShow: false,
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesBans,
 		unbanlist: natDexChampionsSinglesTestingUnbans,
+		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles",
 		mod: 'gen9natdexchampsmodern',
 		gameType: 'doubles',
+		searchShow: false,
 		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernDoublesBans,
+		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
 		section: "Draft",
 		column: 1,
 	},
 	{
-		name: "[Gen 9] NatDex Champions (Classic) Draft",
+		name: "[Gen 9] NatDex Champions Draft",
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
-		name: "[Gen 9] NatDex Champions (Classic) Doubles Draft",
+		name: "[Gen 9] NatDex Champions Doubles Draft",
 		mod: 'gen9natdexchampsclassic',
 		gameType: 'doubles',
 		searchShow: false,
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		section: "NatDex Champions Modern Draft",
+		column: 1,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Draft",
@@ -402,6 +427,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesBans,
+		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles Draft",
@@ -411,6 +437,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernDoublesBans,
+		onValidateSet: validateNatDexChampionsSet,
 	},
 
 	// Unofficial Metagames
@@ -5841,10 +5868,10 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 
 type FormatListEntry = (typeof AllFormats)[number];
 const visibleFormatIds = new Set([
-	'gen9natdexchampionsclassicou',
-	'gen9natdexchampionsclassicdoubles',
-	'gen9natdexchampionsclassicdraft',
-	'gen9natdexchampionsclassicdoublesdraft',
+	'gen9natdexchampionsou',
+	'gen9natdexchampionsdoubles',
+	'gen9natdexchampionsdraft',
+	'gen9natdexchampionsdoublesdraft',
 	'gen9natdexchampionsmodernou',
 	'gen9natdexchampionsmoderndoubles',
 	'gen9natdexchampionsmoderndraft',

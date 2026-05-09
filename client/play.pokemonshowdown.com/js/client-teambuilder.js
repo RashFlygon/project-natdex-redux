@@ -4,8 +4,8 @@
 	var teams;
 
 	function getNatDexChampionsMod(format) {
-		if (format.includes('natdexchampionsclassic') || format.includes('natdexchampsclassic')) return 'gen9natdexchampsclassic';
 		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return 'gen9natdexchampsmodern';
+		if (format.includes('natdexchampions') || format.includes('natdexchamps')) return 'gen9natdexchampsclassic';
 		return '';
 	}
 
@@ -22,6 +22,8 @@
 	}
 
 	function usesChampionsStatPoints(format) {
+		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return true;
+		if (format.includes('natdexchampions') || format.includes('natdexchamps')) return false;
 		return (format.includes('champions') || format.includes('champs')) &&
 			!format.includes('natdexchampionsclassic') && !format.includes('natdexchampsclassic');
 	}
