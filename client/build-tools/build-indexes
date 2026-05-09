@@ -312,6 +312,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const natDexChampionsOUTestUnbans = new Set([
 			'darkrai', 'walkingwake', 'deoxysspeed', 'urshifu',
 			'genesect', 'dragapult', 'darmanitangalar', 'landorus',
+			'starmiemega',
 		]);
 		const genNum = Math.floor(isDoubles ? -genIdent : genIdent);
 		const isBW1 = genIdent === 5.1;
