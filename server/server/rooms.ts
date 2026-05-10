@@ -2075,6 +2075,7 @@ export class GameRoom extends BasicRoom {
 			battle.replaySaved = 'auto';
 		} else {
 			battle.replaySaved = true;
+			if (battle.ended) void battle.markReplaySavedInLog();
 		}
 
 		// If we have a direct connection to a Replays database, just upload the replay
@@ -2104,6 +2105,23 @@ export class GameRoom extends BasicRoom {
 				connection?.popup(`Your replay could not be saved: ${e}`);
 				throw e;
 			}
+			return;
+		}
+
+		if (Config.localreplays) {
+			if (hidden !== 0) {
+				connection?.popup(`This replay was saved, but it is not listed publicly because it is private or hidden.`);
+				return;
+			}
+			const battleId = id.split('-').pop();
+			const sanitize = (name: string) => name.replace(/\W+/g, '').replace(/_/g, '') || 'unknown';
+			const filename = `${battleId}_${sanitize(battle.players[0].name)}_vs_${sanitize(battle.players[1].name)}.html`;
+			const url = `https://${Config.routes.client}/replays/${format.id}/${filename}`;
+			connection?.popup(
+				`|html|<p>Your replay has been saved locally. It will be available shortly after the battle ends:</p><p> ` +
+				`<a class="no-panel-intercept" href="${url}" target="_blank">${url}</a> ` +
+				`<copytext value="${url}">Copy</copytext>`
+			);
 			return;
 		}
 

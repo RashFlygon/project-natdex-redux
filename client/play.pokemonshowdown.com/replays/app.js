@@ -5,7 +5,6 @@
 	var formatFilter = document.getElementById('format-filter');
 	var playerFilter = document.getElementById('player-filter');
 	var pokemonFilter = document.getElementById('pokemon-filter');
-	var textFilter = document.getElementById('text-filter');
 	var replayRows = document.getElementById('replay-rows');
 	var replayCount = document.getElementById('replay-count');
 	var emptyState = document.getElementById('empty-state');
@@ -105,17 +104,12 @@
 		var format = normalize(formatFilter.value);
 		var player = normalize(playerFilter.value);
 		var pokemon = normalize(pokemonFilter.value);
-		var text = normalize(textFilter.value);
 		return rows.filter(function (row) {
 			var teams = normalize(row.team1 + ' ' + row.team2);
 			var players = normalize(row.p1 + ' ' + row.p2 + ' ' + row.winner);
-			var haystack = normalize([
-				row.tier, row.p1, row.p2, row.winner, row.score, row.date, row.turns, row.link, teams,
-			].join(' '));
 			return (!format || normalize(row.tier) === format) &&
 				(!player || players.indexOf(player) >= 0) &&
-				(!pokemon || teams.indexOf(pokemon) >= 0) &&
-				(!text || haystack.indexOf(text) >= 0);
+				(!pokemon || teams.indexOf(pokemon) >= 0);
 		});
 	}
 
@@ -127,7 +121,7 @@
 			return '<tr>' +
 				'<td>' + escapeHTML(row.date) + '</td>' +
 				'<td>' + escapeHTML(row.tier) + '</td>' +
-				'<td>' + escapeHTML(row.winner || row.p1) + '</td>' +
+				'<td>' + escapeHTML(row.p1) + '</td>' +
 				'<td>' + escapeHTML(row.score) + '</td>' +
 				'<td>' + escapeHTML(row.p2) + '</td>' +
 				'<td>' + team1 + team2 + '</td>' +
@@ -138,7 +132,7 @@
 		emptyState.hidden = !!visible.length;
 	}
 
-	[formatFilter, playerFilter, pokemonFilter, textFilter].forEach(function (input) {
+	[formatFilter, playerFilter, pokemonFilter].forEach(function (input) {
 		input.addEventListener('input', render);
 		input.addEventListener('change', render);
 	});

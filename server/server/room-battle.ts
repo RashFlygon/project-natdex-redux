@@ -931,6 +931,19 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		await Monitor.logPath(`${logpath}${this.room.getReplayData().id}.log.json`).write(JSON.stringify(logData));
 		// console.log(JSON.stringify(logData));
 	}
+	async markReplaySavedInLog() {
+		const logsubfolder = Chat.toTimestamp(new Date()).split(' ')[0];
+		const logfolder = logsubfolder.split('-', 2).join('-');
+		const tier = Dex.formats.get(this.room.format).id;
+		const path = `${logfolder}/${tier}/${logsubfolder}/${this.room.getReplayData().id}.log.json`;
+		const file = Monitor.logPath(path);
+		const raw = await file.readIfExists();
+		if (!raw) return;
+		const logData = JSON.parse(raw);
+		logData.replaySaved = true;
+		logData.hiddenReplay = this.room.hideReplay;
+		await file.write(JSON.stringify(logData));
+	}
 	override onConnect(user: User, connection: Connection | null = null) {
 		if (this.ended && this.room.parent?.game?.constructor.name === 'BestOfGame') {
 			const parentGame = this.room.parent.game as BestOfGame;
