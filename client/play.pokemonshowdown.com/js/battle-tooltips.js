@@ -6,7 +6,7 @@
  *
  * @author Guangcong Luo <guangcongluo@gmail.com>
  * @license MIT
- */var
+ */
 
 
 
@@ -14,6 +14,17 @@
 
 
 
+
+var isNatDexChampionsModernFormat=function(format){
+var formatid=toID(format);
+return formatid.includes('natdexchampionsmodern')||formatid.includes('natdexchampsmodern');
+};
+
+var isNatDexChampionsClassicFormat=function(format){
+var formatid=toID(format);
+return(formatid.includes('natdexchampions')||formatid.includes('natdexchamps'))&&
+!isNatDexChampionsModernFormat(format);
+};var
 
 ModifiableValue=function(){
 
@@ -242,7 +253,6 @@ function BattleTooltips(battle){var _this=this;this.battle=void 0;this.
 
 
 
-
 clickTooltipEvent=function(e){
 if(BattleTooltips.isLocked){
 e.preventDefault();
@@ -274,7 +284,7 @@ $('#tooltipwrapper').addClass('tooltip-locking-tap');
 showTooltipEvent=function(e){
 if(BattleTooltips.isLocked)return;
 _this.showTooltip(e.currentTarget);
-};this.battle=battle;}var _proto2=BattleTooltips.prototype;_proto2.isNatDexChampionsClassic=function isNatDexChampionsClassic(){var tierid=toID(this.battle.tier);return tierid.includes('natdexchampionsclassic')||tierid.includes('natdexchampsclassic');};_proto2.getTooltipLevel=function getTooltipLevel(pokemon){var _pokemon$details;if(!this.isNatDexChampionsClassic())return pokemon.level;var levelMatch=(_pokemon$details=pokemon.details)==null?void 0:_pokemon$details.match(/(?:^|, )L(\d+)(?:,|$)/);if(levelMatch)return Number(levelMatch[1])||pokemon.level;return 100;};BattleTooltips.hideTooltip=function hideTooltip(){BattleTooltips.cancelLongTap();if(!BattleTooltips.elem)return;BattleTooltips.elem.parentNode.removeChild(BattleTooltips.elem);BattleTooltips.elem=null;BattleTooltips.parentElem=null;BattleTooltips.isLocked=false;$('#tooltipwrapper').removeClass('tooltip-locked tooltip-locking-click tooltip-locking-tap');};BattleTooltips.cancelLongTap=function cancelLongTap(){if(BattleTooltips.longTapTimeout){clearTimeout(BattleTooltips.longTapTimeout);BattleTooltips.longTapTimeout=0;}$('#tooltipwrapper').removeClass('tooltip-locking-click tooltip-locking-tap');};_proto2.lockTooltip=function lockTooltip(){if(BattleTooltips.elem&&!BattleTooltips.isLocked){BattleTooltips.isLocked=true;if(BattleTooltips.isPressed){$(BattleTooltips.parentElem).removeClass('pressed');BattleTooltips.isPressed=false;}$('#tooltipwrapper').addClass('tooltip-locked');}};_proto2.handleTouchEnd=function handleTouchEnd(e){BattleTooltips.cancelLongTap();if(!BattleTooltips.isLocked)BattleTooltips.hideTooltip();};_proto2.listen=function listen(elem){var _this2=this;var $elem=$(elem);$elem.on('mouseover','.has-tooltip',this.showTooltipEvent);$elem.on('click','.has-tooltip',this.clickTooltipEvent);$elem.on('focus','.has-tooltip',this.showTooltipEvent);$elem.on('mouseout','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mousedown','.has-tooltip',this.holdLockTooltipEvent);$elem.on('blur','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mouseup','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchstart','.has-tooltip',function(e){e.preventDefault();_this2.holdLockTooltipEvent(e);if(!BattleTooltips.parentElem){BattleTooltips.parentElem=e.currentTarget;}$(BattleTooltips.parentElem).addClass('pressed');BattleTooltips.isPressed=true;});$elem.on('touchend','.has-tooltip',function(e){e.preventDefault();if(e.currentTarget===BattleTooltips.parentElem&&BattleTooltips.isPressed){BattleTooltips.parentElem.click();}BattleTooltips.unshowTooltip();});$elem.on('touchleave','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchcancel','.has-tooltip',BattleTooltips.unshowTooltip);};BattleTooltips.
+};this.battle=battle;}var _proto2=BattleTooltips.prototype;_proto2.isNatDexChampionsClassic=function isNatDexChampionsClassic(){return isNatDexChampionsClassicFormat(this.battle.tier);};_proto2.getTooltipLevel=function getTooltipLevel(pokemon){var _pokemon$details;if(!this.isNatDexChampionsClassic())return pokemon.level;var levelMatch=(_pokemon$details=pokemon.details)==null?void 0:_pokemon$details.match(/(?:^|, )L(\d+)(?:,|$)/);if(levelMatch)return Number(levelMatch[1])||pokemon.level;return 100;};BattleTooltips.hideTooltip=function hideTooltip(){BattleTooltips.cancelLongTap();if(!BattleTooltips.elem)return;BattleTooltips.elem.parentNode.removeChild(BattleTooltips.elem);BattleTooltips.elem=null;BattleTooltips.parentElem=null;BattleTooltips.isLocked=false;$('#tooltipwrapper').removeClass('tooltip-locked tooltip-locking-click tooltip-locking-tap');};BattleTooltips.cancelLongTap=function cancelLongTap(){if(BattleTooltips.longTapTimeout){clearTimeout(BattleTooltips.longTapTimeout);BattleTooltips.longTapTimeout=0;}$('#tooltipwrapper').removeClass('tooltip-locking-click tooltip-locking-tap');};_proto2.lockTooltip=function lockTooltip(){if(BattleTooltips.elem&&!BattleTooltips.isLocked){BattleTooltips.isLocked=true;if(BattleTooltips.isPressed){$(BattleTooltips.parentElem).removeClass('pressed');BattleTooltips.isPressed=false;}$('#tooltipwrapper').addClass('tooltip-locked');}};_proto2.handleTouchEnd=function handleTouchEnd(e){BattleTooltips.cancelLongTap();if(!BattleTooltips.isLocked)BattleTooltips.hideTooltip();};_proto2.listen=function listen(elem){var _this2=this;var $elem=$(elem);$elem.on('mouseover','.has-tooltip',this.showTooltipEvent);$elem.on('click','.has-tooltip',this.clickTooltipEvent);$elem.on('focus','.has-tooltip',this.showTooltipEvent);$elem.on('mouseout','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mousedown','.has-tooltip',this.holdLockTooltipEvent);$elem.on('blur','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('mouseup','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchstart','.has-tooltip',function(e){e.preventDefault();_this2.holdLockTooltipEvent(e);if(!BattleTooltips.parentElem){BattleTooltips.parentElem=e.currentTarget;}$(BattleTooltips.parentElem).addClass('pressed');BattleTooltips.isPressed=true;});$elem.on('touchend','.has-tooltip',function(e){e.preventDefault();if(e.currentTarget===BattleTooltips.parentElem&&BattleTooltips.isPressed){BattleTooltips.parentElem.click();}BattleTooltips.unshowTooltip();});$elem.on('touchleave','.has-tooltip',BattleTooltips.unshowTooltip);$elem.on('touchcancel','.has-tooltip',BattleTooltips.unshowTooltip);};BattleTooltips.
 
 
 
@@ -1521,7 +1531,7 @@ maxpp=5;
 move=this.battle.dex.moves.get(moveName);
 maxpp=move.pp===1||move.noPPBoosts?move.pp:move.pp*8/5;
 if(this.battle.gen<3)maxpp=Math.min(61,maxpp);
-if(this.battle.tier.includes('Champions')){
+if(this.battle.tier.includes('Champions')&&!this.isNatDexChampionsClassic()){
 var pp=move.pp>20?20:move.pp;
 maxpp=pp===1||move.noPPBoosts?pp:(pp/5+1)*4;
 }
@@ -1583,9 +1593,7 @@ if(baseSpe>255)baseSpe=255;
 }
 var level=((_pokemon$volatiles$tr=pokemon.volatiles.transform)==null?void 0:_pokemon$volatiles$tr[4])||this.getTooltipLevel(pokemon);
 var tier=this.battle.tier;
-var tierid=toID(tier);
-var isNatDexChampionsClassic=
-tierid.includes('natdexchampionsclassic')||tierid.includes('natdexchampsclassic');
+var isNatDexChampionsClassic=isNatDexChampionsClassicFormat(tier);
 var gen=this.battle.gen;
 var isCGT=tier.includes('Computer-Generated Teams');
 var isRandomBattle=tier.includes('Random Battle')||
@@ -2889,7 +2897,7 @@ this.formatid.includes('metronomebattle')||
 this.formatid.endsWith('norestrictions');
 
 this.useStatPoints=this.formatid.includes('champions')&&
-!this.formatid.includes('natdexchampionsclassic')&&!this.formatid.includes('natdexchampsclassic');
+!isNatDexChampionsClassicFormat(this.formatid);
 this.supportsEVs=!this.formatid.includes('letsgo')&&!this.useStatPoints;
 this.supportsAVs=!this.supportsEVs&&this.formatid.endsWith('norestrictions');
 }var _proto3=BattleStatGuesser.prototype;_proto3.
@@ -3495,7 +3503,7 @@ dex.gen<3||
 formatid.includes('metronomebattle')||formatid.endsWith('norestrictions');
 
 var useStatPoints=formatid.includes('champions')&&
-!formatid.includes('natdexchampionsclassic')&&!formatid.includes('natdexchampsclassic');
+!isNatDexChampionsClassicFormat(formatid);
 var supportsEVs=!formatid.includes('letsgo')&&!useStatPoints;
 if(!(useStatPoints||supportsEVs)||ignoreEVLimits)return null;
 

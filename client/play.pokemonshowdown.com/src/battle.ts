@@ -42,6 +42,17 @@ export type WeatherState = [name: string, minTimeLeft: number, maxTimeLeft: numb
 export type HPColor = 'r' | 'y' | 'g';
 export type PPState = number | [number, number];
 
+const isNatDexChampionsModernTier = (tier: string) => {
+	const tierid = toID(tier);
+	return tierid.includes('natdexchampionsmodern') || tierid.includes('natdexchampsmodern');
+};
+
+const isNatDexChampionsClassicTier = (tier: string) => {
+	const tierid = toID(tier);
+	return (tierid.includes('natdexchampions') || tierid.includes('natdexchamps')) &&
+		!isNatDexChampionsModernTier(tier);
+};
+
 export class Pokemon implements PokemonDetails, PokemonHealth {
 	name = '';
 	speciesForme = '';
@@ -365,13 +376,14 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 			if (ppUsed[1] < 0) ppUsed[1] = 0;
 			const move = this.side.battle.dex.moves.get(entry[0]);
 			let maxpp = (move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5);
-			if (this.side.battle.tier.includes('NatDex Champions (Modern)')) {
+			if (isNatDexChampionsModernTier(this.side.battle.tier)) {
 				if (move.pp === 1 || move.noPPBoosts) maxpp = move.pp;
 				else if (move.id === 'protect' || move.pp <= 5) maxpp = 8;
 				else if (move.pp <= 10) maxpp = 12;
 				else if (move.pp <= 15) maxpp = 16;
 				else maxpp = 20;
-			} else if (this.side.battle.tier.includes('Champions') && !this.side.battle.tier.includes('NatDex Champions (Classic)')) {
+			} else if (this.side.battle.tier.includes('Champions') &&
+				!isNatDexChampionsClassicTier(this.side.battle.tier)) {
 				maxpp = move.pp > 20 ? 20 : move.pp;
 				maxpp = move.pp === 1 || move.noPPBoosts ? move.pp : (move.pp / 5 + 1) * 4;
 			}
@@ -3515,10 +3527,10 @@ export class Battle {
 			if (this.tier.includes(`Legends`)) {
 				this.dex = Dex.mod('gen9legendsou' as ID);
 			}
-			if (this.tier.includes(`NatDex Champions (Classic)`)) {
-				this.dex = Dex.mod('gen9natdexchampsclassic' as ID);
-			} else if (this.tier.includes(`NatDex Champions (Modern)`)) {
+			if (isNatDexChampionsModernTier(this.tier)) {
 				this.dex = Dex.mod('gen9natdexchampsmodern' as ID);
+			} else if (isNatDexChampionsClassicTier(this.tier)) {
+				this.dex = Dex.mod('gen9natdexchampsclassic' as ID);
 			} else if (this.tier.includes(`Champions`)) {
 				this.dex = Dex.mod('champions' as ID);
 			}

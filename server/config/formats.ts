@@ -65,6 +65,16 @@ const natDexChampionsModernDoublesBans = [
 	'Hidden Power',
 ];
 
+const natDexChampionsSinglesOUBans = [
+	...natDexChampionsSinglesBans,
+	'Shedinja',
+];
+
+const natDexChampionsModernSinglesOUBans = [
+	...natDexChampionsModernSinglesBans,
+	'Shedinja',
+];
+
 const AllFormats: import('../sim/dex-formats').FormatList = [
 
 	// S/V Singles
@@ -362,7 +372,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions OU",
 		mod: 'gen9natdexchampsclassic',
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
-		banlist: natDexChampionsSinglesBans,
+		banlist: natDexChampionsSinglesOUBans,
 		unbanlist: natDexChampionsSinglesTestingUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
@@ -382,7 +392,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsmodern',
 		searchShow: false,
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
-		banlist: natDexChampionsModernSinglesBans,
+		banlist: natDexChampionsModernSinglesOUBans,
 		unbanlist: natDexChampionsSinglesTestingUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},

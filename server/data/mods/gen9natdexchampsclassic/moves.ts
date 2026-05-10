@@ -6,6 +6,17 @@ type StringMoveTable = {[id: string]: any};
 
 export const Moves: MoveTable = {};
 
+const mergeInheritedMove = (baseMove: any, championsMove: any) => {
+	const {inherit, ...championsOverrides} = championsMove;
+	const mergedMove = {...baseMove, ...championsOverrides};
+	if (championsMove.condition?.inherit) {
+		const conditionOverrides = {...championsMove.condition};
+		delete conditionOverrides.inherit;
+		mergedMove.condition = {...baseMove?.condition, ...conditionOverrides};
+	}
+	return mergedMove;
+};
+
 const baseTable = BaseMoves as StringMoveTable;
 const championsTable = ChampionsMoves as StringMoveTable;
 const targetTable = Moves as StringMoveTable;
@@ -18,8 +29,7 @@ for (const id of ids) {
 		continue;
 	}
 	if (championsMove.inherit) {
-		const {inherit, ...championsOverrides} = championsMove;
-		targetTable[id] = {...baseMove, ...championsOverrides};
+		targetTable[id] = mergeInheritedMove(baseMove, championsMove);
 	} else {
 		targetTable[id] = {...championsMove};
 	}
