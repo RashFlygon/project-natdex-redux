@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Project NatDex Redux Replays</title>
+	<link rel="stylesheet" href="/replays/style.css" />
+</head>
+<body>
+	<main class="replay-shell">
+		<header class="replay-header">
+			<div>
+				<h1>Project NatDex Redux Replays</h1>
+				<p id="replay-count">Loading replays...</p>
+			</div>
+			<button id="refresh" type="button">Refresh</button>
+		</header>
+
+		<section class="filters" aria-label="Replay filters">
+			<label>
+				Format
+				<select id="format-filter">
+					<option value="">All formats</option>
+				</select>
+			</label>
+			<label>
+				Player
+				<input id="player-filter" type="search" placeholder="Any player" />
+			</label>
+			<label>
+				Pokemon
+				<input id="pokemon-filter" type="search" placeholder="Any Pokemon" />
+			</label>
+			<label>
+				Search
+				<input id="text-filter" type="search" placeholder="Battle, winner, date" />
+			</label>
+		</section>
+
+		<section class="table-wrap" aria-live="polite">
+			<table>
+				<thead>
+					<tr>
+						<th>Date</th>
+						<th>Format</th>
+						<th>Winner</th>
+						<th>Score</th>
+						<th>Opponent</th>
+						<th>Teams</th>
+						<th>Replay</th>
+					</tr>
+				</thead>
+				<tbody id="replay-rows"></tbody>
+			</table>
+			<p id="empty-state" hidden>No public replays match these filters.</p>
+		</section>
+	</main>
+	<script src="/replays/app.js"></script>
+</body>
+</html>

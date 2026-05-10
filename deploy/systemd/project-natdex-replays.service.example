@@ -1,0 +1,10 @@
+[Unit]
+Description=Generate Project NatDex replay pages
+After=pokemon-showdown.service
+
+[Service]
+Type=oneshot
+User=showdown
+Group=showdown
+WorkingDirectory=/opt/project-natdex
+ExecStart=/opt/project-natdex/.venv-replays/bin/python /opt/project-natdex/tools/replays/generate_replays.py
