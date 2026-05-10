@@ -15,6 +15,17 @@ import { BattleLog } from "./battle-log";
 import { Move, BattleNatures } from "./battle-dex-data";
 import { BattleTextParser } from "./battle-text-parser";
 
+const isNatDexChampionsModernFormat = (format: string) => {
+	const formatid = toID(format);
+	return formatid.includes('natdexchampionsmodern') || formatid.includes('natdexchampsmodern');
+};
+
+const isNatDexChampionsClassicFormat = (format: string) => {
+	const formatid = toID(format);
+	return (formatid.includes('natdexchampions') || formatid.includes('natdexchamps')) &&
+		!isNatDexChampionsModernFormat(format);
+};
+
 export class ModifiableValue {
 	value = 0;
 	maxValue = 0;
@@ -154,8 +165,7 @@ export class BattleTooltips {
 	}
 
 	isNatDexChampionsClassic() {
-		const tierid = toID(this.battle.tier);
-		return tierid.includes('natdexchampionsclassic') || tierid.includes('natdexchampsclassic');
+		return isNatDexChampionsClassicFormat(this.battle.tier);
 	}
 
 	getTooltipLevel(pokemon: Pokemon | ServerPokemon) {
@@ -1521,7 +1531,7 @@ export class BattleTooltips {
 			move = this.battle.dex.moves.get(moveName);
 			maxpp = (move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5);
 			if (this.battle.gen < 3) maxpp = Math.min(61, maxpp);
-			if (this.battle.tier.includes('Champions')) {
+			if (this.battle.tier.includes('Champions') && !this.isNatDexChampionsClassic()) {
 				let pp = move.pp > 20 ? 20 : move.pp;
 				maxpp = (pp === 1 || move.noPPBoosts) ? pp : (pp / 5 + 1) * 4;
 			}
@@ -1583,9 +1593,7 @@ export class BattleTooltips {
 		}
 		let level = pokemon.volatiles.transform?.[4] || this.getTooltipLevel(pokemon);
 		let tier = this.battle.tier;
-		const tierid = toID(tier);
-		const isNatDexChampionsClassic =
-			tierid.includes('natdexchampionsclassic') || tierid.includes('natdexchampsclassic');
+		const isNatDexChampionsClassic = isNatDexChampionsClassicFormat(tier);
 		let gen = this.battle.gen;
 		let isCGT = tier.includes('Computer-Generated Teams');
 		let isRandomBattle = tier.includes('Random Battle') ||
@@ -2889,7 +2897,7 @@ export class BattleStatGuesser {
 			this.formatid.endsWith('norestrictions')
 		);
 		this.useStatPoints = this.formatid.includes('champions') &&
-			!this.formatid.includes('natdexchampionsclassic') && !this.formatid.includes('natdexchampsclassic');
+			!isNatDexChampionsClassicFormat(this.formatid);
 		this.supportsEVs = !this.formatid.includes('letsgo') && !this.useStatPoints;
 		this.supportsAVs = !this.supportsEVs && this.formatid.endsWith('norestrictions');
 	}
@@ -3495,7 +3503,7 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 		formatid.includes('metronomebattle') || formatid.endsWith('norestrictions')
 	);
 	const useStatPoints = formatid.includes('champions') &&
-		!formatid.includes('natdexchampionsclassic') && !formatid.includes('natdexchampsclassic');
+		!isNatDexChampionsClassicFormat(formatid);
 	const supportsEVs = !formatid.includes('letsgo') && !useStatPoints;
 	if (!(useStatPoints || supportsEVs) || ignoreEVLimits) return null;
 

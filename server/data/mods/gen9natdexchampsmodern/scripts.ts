@@ -5,6 +5,8 @@ import {Learnsets as ZALearnsets} from './za-learnsets';
 
 type LearnsetTable = import('../../../sim/dex-species').ModdedLearnsetDataTable;
 type LearnsetData = LearnsetTable[keyof LearnsetTable];
+type StringLearnsetTable = {[speciesid: string]: LearnsetData | undefined};
+type StringLearnset = {[moveid: string]: string[]};
 
 export const Scripts: ModdedBattleScriptsData = {
 	inherit: 'champions',
@@ -12,15 +14,16 @@ export const Scripts: ModdedBattleScriptsData = {
 	init() {
 		const sources = [BaseLearnsets, PLALearnsets, ZALearnsets] as LearnsetTable[];
 		for (const source of sources) {
-			for (const speciesId in source) {
-				const sourceEntry = source[speciesId] as LearnsetData | undefined;
+			for (const speciesId in source as StringLearnsetTable) {
+				const sourceEntry = (source as StringLearnsetTable)[speciesId];
 				if (!sourceEntry?.learnset) continue;
 				const targetEntry = this.modData('Learnsets', speciesId);
-				targetEntry.learnset ||= {};
-				for (const moveId in sourceEntry.learnset) {
-					targetEntry.learnset[moveId] = Array.from(new Set([
-						...(targetEntry.learnset[moveId] || []),
-						...sourceEntry.learnset[moveId],
+				const targetLearnset = (targetEntry.learnset ||= {}) as StringLearnset;
+				const sourceLearnset = sourceEntry.learnset as StringLearnset;
+				for (const moveId in sourceLearnset) {
+					targetLearnset[moveId] = Array.from(new Set([
+						...(targetLearnset[moveId] || []),
+						...sourceLearnset[moveId],
 					]));
 				}
 			}

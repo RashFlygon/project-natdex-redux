@@ -86,6 +86,15 @@ export function toUserid(text: any) {
 	return toID(text);
 }
 
+const isNatDexChampionsModernFormat = (formatid: string) => (
+	formatid.includes('natdexchampionsmodern') || formatid.includes('natdexchampsmodern')
+);
+
+const isNatDexChampionsClassicFormat = (formatid: string) => (
+	(formatid.includes('natdexchampions') || formatid.includes('natdexchamps')) &&
+	!isNatDexChampionsModernFormat(formatid)
+);
+
 type Comparable = number | string | boolean | Comparable[] | { reverse: Comparable };
 export const PSUtils = new class {
 	/**
@@ -284,10 +293,10 @@ export const Dex = new class implements ModdedDex {
 		if (dex.gen === 9 && formatid.includes('legends')) {
 			dex = Dex.mod('gen9legendsou' as ID);
 		}
-		if (dex.gen === 9 && (formatid.includes('natdexchampionsclassic') || formatid.includes('natdexchampsclassic'))) {
-			dex = Dex.mod('gen9natdexchampsclassic' as ID);
-		} else if (dex.gen === 9 && (formatid.includes('natdexchampionsmodern') || formatid.includes('natdexchampsmodern'))) {
+		if (dex.gen === 9 && isNatDexChampionsModernFormat(formatid)) {
 			dex = Dex.mod('gen9natdexchampsmodern' as ID);
+		} else if (dex.gen === 9 && isNatDexChampionsClassicFormat(formatid)) {
+			dex = Dex.mod('gen9natdexchampsclassic' as ID);
 		} else if (dex.gen === 9 && formatid.includes('champions')) {
 			dex = Dex.mod('champions' as ID);
 		}
