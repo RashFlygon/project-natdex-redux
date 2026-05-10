@@ -11,6 +11,15 @@ exports.servertoken = '';
 exports.servername = 'Project NatDex Redux';
 exports.serverdesc = 'NatDex Champions Classic and Modern formats.';
 
+exports.routes = {
+	root: 'play.champsnatdex.dynv6.net',
+	client: 'play.champsnatdex.dynv6.net',
+	dex: 'dex.pokemonshowdown.com',
+	replays: 'play.champsnatdex.dynv6.net',
+	users: 'pokemonshowdown.com/users',
+	teams: 'teams.pokemonshowdown.com',
+};
+
 // Keep the official login server for public production.
 exports.loginserver = 'http://play.pokemonshowdown.com/';
 exports.loginserverkeyalgo = "RSA-SHA1";

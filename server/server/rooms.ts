@@ -2116,7 +2116,7 @@ export class GameRoom extends BasicRoom {
 			const battleId = id.split('-').pop();
 			const sanitize = (name: string) => name.replace(/\W+/g, '').replace(/_/g, '') || 'unknown';
 			const filename = `${battleId}_${sanitize(battle.players[0].name)}_vs_${sanitize(battle.players[1].name)}.html`;
-			const url = `https://${Config.routes.client}/replays/${format.id}/${filename}`;
+			const url = `https://${Config.routes.replays}/replays/${format.id}/${filename}`;
 			connection?.popup(
 				`|html|<p>Your replay has been saved locally. It will be available shortly after the battle ends:</p><p> ` +
 				`<a class="no-panel-intercept" href="${url}" target="_blank">${url}</a> ` +
