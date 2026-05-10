@@ -12,6 +12,7 @@
     "build:client": "npm run prepare:client-config && npm --prefix client run build",
     "build:client:indexes": "npm run prepare:client-config && node client/build-tools/build-indexes",
     "build:all": "npm run build:server && npm run build:client:indexes && npm run build:client",
+    "replays:generate": "python3 tools/replays/generate_replays.py",
     "start:server": "npm --prefix server start",
     "check:server": "npm --prefix server run tsc",
     "status": "git status -sb"

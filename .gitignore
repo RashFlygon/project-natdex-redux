@@ -1,5 +1,6 @@
 # Dependencies and build output
 **/node_modules/
+**/__pycache__/
 server/dist/
 server/.tsbuildinfo
 server/*.tsbuildinfo
@@ -7,6 +8,10 @@ client/caches/
 client/play.pokemonshowdown.com/data/
 client/play.pokemonshowdown.com/config/
 client/play.pokemonshowdown.com/js/*.map
+client/play.pokemonshowdown.com/replays/*
+!client/play.pokemonshowdown.com/replays/app.js
+!client/play.pokemonshowdown.com/replays/index.html
+!client/play.pokemonshowdown.com/replays/style.css
 
 # Private Pokemon Showdown server state
 server/config/config.js

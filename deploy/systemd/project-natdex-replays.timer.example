@@ -1,0 +1,11 @@
+[Unit]
+Description=Generate Project NatDex replay pages every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Unit=project-natdex-replays.service
+
+[Install]
+WantedBy=timers.target

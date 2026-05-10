@@ -31,6 +31,7 @@ Y929lRybWEiKUr+4Yw2O1W0CAwEAAQ==
 -----END PUBLIC KEY-----`;
 
 exports.noguestsecurity = false;
+exports.logchallenges = true;
 
 // If nginx runs on the same machine and forwards to 127.0.0.1, this is enough.
 exports.proxyip = '127.0.0.1';

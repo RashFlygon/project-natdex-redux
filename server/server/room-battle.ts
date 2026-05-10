@@ -915,6 +915,7 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 			logData.p4rating = p4rating;
 		}
 		logData.endType = this.endType;
+		logData.hiddenReplay = this.room.hideReplay;
 		if (!p1rating) logData.ladderError = true;
 		const date = new Date();
 		logData.timestamp = `${date}`;
