@@ -39,6 +39,10 @@ const natDexChampionsSinglesTestingUnbans = [
 	'Darmanitan-Galar', 'Landorus', 'Alakazam-Mega', 'Alakazite',
 ];
 
+const natDexChampionsMoveUnbans = [
+	'Light of Ruin',
+];
+
 const validateNatDexChampionsSet = function (this: any, set: any) {
 	if (
 		this.toID(set.species).startsWith('greninja') &&
@@ -373,7 +377,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
 		banlist: natDexChampionsSinglesOUBans,
-		unbanlist: natDexChampionsSinglesTestingUnbans,
+		unbanlist: [...natDexChampionsSinglesTestingUnbans, ...natDexChampionsMoveUnbans],
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -382,6 +386,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		gameType: 'doubles',
 		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause'],
 		banlist: natDexChampionsDoublesBans,
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -393,7 +398,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesOUBans,
-		unbanlist: natDexChampionsSinglesTestingUnbans,
+		unbanlist: [...natDexChampionsSinglesTestingUnbans, ...natDexChampionsMoveUnbans],
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -403,6 +408,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernDoublesBans,
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -415,6 +421,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -424,6 +431,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -437,6 +445,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesBans,
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -447,6 +456,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernDoublesBans,
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 
