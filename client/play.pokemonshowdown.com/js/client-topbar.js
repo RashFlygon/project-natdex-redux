@@ -1104,7 +1104,9 @@
 
 			buf += '<p>If this is your account:</p>';
 			buf += '<p><label class="label">Username: <strong><input type="text" name="username" value="' + BattleLog.escapeHTML(data.username) + '" style="color:inherit;background:transparent;border:0;font:inherit;font-size:inherit;display:block" readonly autocomplete="username" /></strong></label></p>';
-			if (data.special === '@gmail') {
+			if (Config.oauthClientId) {
+				buf += '<p class="buttonbar"><button type="button" name="oauth" class="button autofocus"><strong>Log in with Pokemon Showdown</strong></button> <button type="button" name="close" class="button">Cancel</button></p>';
+			} else if (data.special === '@gmail') {
 				buf += '<div id="g_id_onload" data-client_id="912270888098-jjnre816lsuhc5clj3vbcn4o2q7p4qvk.apps.googleusercontent.com" data-context="signin" data-ux_mode="popup" data-callback="gapiCallback" data-auto_prompt="false"></div>';
 				buf += '<div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_blue" data-text="continue_with" data-size="large" data-logo_alignment="left" data-auto_select="true" data-itp_support="true" style="width:fit-content;margin:0 auto">[loading Google log-in button]</div>';
 				buf += '<p class="buttonbar"><button name="close" class="button">Cancel</button></p>';
@@ -1137,8 +1139,17 @@
 			this.close();
 			app.addPopup(LoginPopup);
 		},
+		oauth: function () {
+			var username = this.$('input[name=username]').val();
+			this.close();
+			app.user.oauthRename(username);
+		},
 		submit: function (data) {
 			this.close();
+			if (Config.oauthClientId) {
+				app.user.oauthRename(data.username);
+				return;
+			}
 			app.user.passwordRename(data.username, data.password);
 		}
 	});

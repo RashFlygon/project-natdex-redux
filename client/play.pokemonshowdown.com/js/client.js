@@ -326,6 +326,78 @@ function toId() {
 				}
 			}), 'text');
 		},
+		oauthRename: function (name) {
+			var clientId = Config.oauthClientId;
+			if (!clientId) {
+				app.addPopupMessage("Pokemon Showdown OAuth is not configured for this server yet.");
+				return;
+			}
+			if (!this.challstr) {
+				app.addPopupMessage("You are not connected to the server yet. Please try again in a moment.");
+				return;
+			}
+
+			var self = this;
+			var redirectURI = location.protocol + '//' + location.host + '/oauth-callback.html';
+			var authorizeUrl = new URL('https://play.pokemonshowdown.com/api/oauth/authorize');
+			authorizeUrl.searchParams.set('redirect_uri', redirectURI);
+			authorizeUrl.searchParams.set('client_id', clientId);
+			authorizeUrl.searchParams.set('challenge', this.challstr);
+
+			var popup = window.open(authorizeUrl.href, 'pokemonshowdown-oauth', 'popup=1,width=620,height=720');
+			if (!popup) {
+				app.addPopupMessage("Your browser blocked the Pokemon Showdown login popup.");
+				return;
+			}
+
+			var finished = false;
+			var finish = function (href) {
+				if (finished) return;
+				finished = true;
+				window.removeEventListener('message', onMessage);
+				clearInterval(pollTimer);
+				try {
+					popup.close();
+				} catch (e) {}
+
+				var url = new URL(href);
+				var assertion = url.searchParams.get('assertion');
+				var username = url.searchParams.get('user') || name;
+				var token = url.searchParams.get('token');
+				if (token) {
+					try {
+						localStorage.setItem('ps-oauth-token', token);
+						localStorage.setItem('ps-oauth-userid', toUserid(username));
+					} catch (e) {}
+				}
+				if (!assertion) {
+					app.addPopupMessage("Pokemon Showdown did not return a login assertion.");
+					return;
+				}
+				self.set('registered', { username: username, userid: toUserid(username) });
+				self.finishRename(username, assertion);
+			};
+			var onMessage = function (e) {
+				if (e.origin !== location.origin) return;
+				if (!e.data || e.data.type !== 'pokemonshowdown-oauth-callback') return;
+				finish(e.data.href);
+			};
+			window.addEventListener('message', onMessage);
+			var pollTimer = setInterval(function () {
+				if (finished) return;
+				if (popup.closed) {
+					finished = true;
+					window.removeEventListener('message', onMessage);
+					clearInterval(pollTimer);
+					return;
+				}
+				try {
+					if (popup.location.href.indexOf(redirectURI) === 0) {
+						finish(popup.location.href);
+					}
+				} catch (e) {}
+			}, 500);
+		},
 		challstr: '',
 		receiveChallstr: function (challstr) {
 			if (challstr) {

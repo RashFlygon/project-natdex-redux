@@ -6,6 +6,11 @@ var Config = Config || {};
 Config.bannedHosts = [];
 Config.whitelist = ['wikipedia.org'];
 
+// Optional: official Pokemon Showdown OAuth client ID for registered logins.
+// Request one from the Pokemon Showdown loginserver maintainers before enabling
+// this on production.
+Config.oauthClientId = '';
+
 // Copy this file to config/config.js on the VPS and replace these domains.
 // This file is safe to commit; config/config.js is intentionally ignored.
 Config.defaultserver = {

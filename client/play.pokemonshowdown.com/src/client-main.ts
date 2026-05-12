@@ -53,6 +53,7 @@ export interface PSConfig {
 	customcolors: Record<string, string>;
 	whitelist?: string[];
 	testclient?: boolean;
+	oauthClientId?: string;
 }
 export declare const Config: PSConfig;
 

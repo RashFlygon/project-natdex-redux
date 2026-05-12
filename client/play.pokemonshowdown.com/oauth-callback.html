@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Pokemon Showdown Login</title>
+</head>
+<body>
+	<script>
+		if (window.opener) {
+			window.opener.postMessage({
+				type: 'pokemonshowdown-oauth-callback',
+				href: location.href,
+			}, location.origin);
+		}
+	</script>
+	You can close this window.
+</body>
+</html>
