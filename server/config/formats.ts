@@ -35,8 +35,8 @@ const natDexChampionsSinglesBans = [
 ];
 
 const natDexChampionsSinglesTestingUnbans = [
-	'Darkrai', 'Walking Wake', 'Deoxys-Speed', 'Urshifu', 'Genesect', 'Dragapult',
-	'Darmanitan-Galar', 'Landorus', 'Alakazam-Mega', 'Alakazite',
+	'Darkrai', 'Walking Wake', 'Deoxys-Speed', 'Urshifu', 'Dragapult',
+	'Landorus', 'Alakazam-Mega', 'Alakazite',
 ];
 
 const natDexChampionsMoveUnbans = [
@@ -71,12 +71,12 @@ const natDexChampionsModernDoublesBans = [
 
 const natDexChampionsSinglesOUBans = [
 	...natDexChampionsSinglesBans,
-	'Shedinja',
+	'Darmanitan-Galar', 'Genesect', 'Shedinja',
 ];
 
 const natDexChampionsModernSinglesOUBans = [
 	...natDexChampionsModernSinglesBans,
-	'Shedinja',
+	'Darmanitan-Galar', 'Genesect', 'Shedinja',
 ];
 
 const AllFormats: import('../sim/dex-formats').FormatList = [
