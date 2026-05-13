@@ -399,8 +399,9 @@ export const PSLoginServer = new class {
 		// }
 		data.act = act;
 		let url = '/~~' + PS.server.id + '/action.php';
-		if (location.pathname.endsWith('.html')) {
-			url = 'https://' + Config.routes.client + url;
+		const loginServerHost = Config.loginServerHost || (location.pathname.endsWith('.html') ? Config.routes.client : '');
+		if (loginServerHost) {
+			url = 'https://' + loginServerHost + url;
 			if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
 				data.sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',');
 			}

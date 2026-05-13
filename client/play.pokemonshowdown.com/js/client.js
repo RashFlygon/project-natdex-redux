@@ -218,8 +218,9 @@ function toId() {
 		 */
 		getActionPHP: function () {
 			var ret = '/~~' + Config.server.id + '/action.php';
-			if (Config.testclient) {
-				ret = 'https://' + Config.routes.client + ret;
+			var loginServerHost = Config.loginServerHost || (Config.testclient ? Config.routes.client : '');
+			if (loginServerHost) {
+				ret = 'https://' + loginServerHost + ret;
 			}
 			return (this.getActionPHP = function () {
 				return ret;

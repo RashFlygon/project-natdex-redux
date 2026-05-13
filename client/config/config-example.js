@@ -11,6 +11,11 @@ Config.whitelist = ['wikipedia.org'];
 // this on production.
 Config.oauthClientId = '';
 
+// Optional: send loginserver requests directly to official Pokemon Showdown.
+// This preserves the custom client while avoiding custom-domain action.php
+// proxy issues. Users may need to log in again after refreshing.
+Config.loginServerHost = 'play.pokemonshowdown.com';
+
 // Copy this file to config/config.js on the VPS and replace these domains.
 // This file is safe to commit; config/config.js is intentionally ignored.
 Config.defaultserver = {

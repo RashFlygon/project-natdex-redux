@@ -54,6 +54,7 @@ export interface PSConfig {
 	whitelist?: string[];
 	testclient?: boolean;
 	oauthClientId?: string;
+	loginServerHost?: string;
 }
 export declare const Config: PSConfig;
 
