@@ -226,6 +226,14 @@ function toId() {
 				return ret;
 			})();
 		},
+		getActionData: function (data) {
+			var loginServerHost = Config.loginServerHost || (Config.testclient ? Config.routes.client : '');
+			if (loginServerHost) {
+				data.sid = (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') ?
+					POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',') : 'a';
+			}
+			return data;
+		},
 		/**
 		 * Process a signed assertion returned from the login server.
 		 * Emits the following events (arguments in brackets):
@@ -289,11 +297,11 @@ function toId() {
 
 			if (this.get('userid') !== userid) {
 				var self = this;
-				$.post(this.getActionPHP(), {
+				$.post(this.getActionPHP(), this.getActionData({
 					act: 'getassertion',
 					userid: userid,
 					challstr: this.challstr
-				}, function (data) {
+				}), function (data) {
 					self.finishRename(name, data);
 				});
 			} else {
@@ -302,12 +310,12 @@ function toId() {
 		},
 		passwordRename: function (name, password, special) {
 			var self = this;
-			$.post(this.getActionPHP(), {
+			$.post(this.getActionPHP(), this.getActionData({
 				act: 'login',
 				name: name,
 				pass: password,
 				challstr: this.challstr
-			}, Storage.safeJSON(function (data) {
+			}), Storage.safeJSON(function (data) {
 				if (data && data.curuser && data.curuser.loggedin) {
 					// success!
 					self.set('registered', data.curuser);
@@ -415,10 +423,10 @@ function toId() {
 				 */
 				this.challstr = challstr;
 				var self = this;
-				$.post(this.getActionPHP(), {
+				$.post(this.getActionPHP(), this.getActionData({
 					act: 'upkeep',
 					challstr: this.challstr
-				}, Storage.safeJSON(function (data) {
+				}), Storage.safeJSON(function (data) {
 					self.loaded = true;
 					if (!data.username) {
 						app.topbar.updateUserbar();
@@ -442,10 +450,10 @@ function toId() {
 		 * Log out from the server (but remain connected as a guest).
 		 */
 		logout: function () {
-			$.post(this.getActionPHP(), {
+			$.post(this.getActionPHP(), this.getActionData({
 				act: 'logout',
 				userid: this.get('userid')
-			});
+			}));
 			app.send('/logout');
 			app.trigger('init:socketclosed', "You have been logged out and disconnected.<br /><br />If you wanted to change your name while staying connected, use the 'Change Name' button or the '/nick' command.", false);
 			app.socket.close();
@@ -1049,10 +1057,10 @@ function toId() {
 			if (!this.loadingTeam) {
 				var app = this;
 				this.loadingTeam = true;
-				$.get(app.user.getActionPHP(), {
+				$.get(app.user.getActionPHP(), app.user.getActionData({
 					act: 'getteam',
 					teamid: team.teamid
-				}, Storage.safeJSON(function (data) {
+				}), Storage.safeJSON(function (data) {
 					app.loadingTeam = false;
 					if (data.actionerror) {
 						return app.addPopupMessage("Error loading team: " + data.actionerror);
@@ -1242,10 +1250,10 @@ function toId() {
 
 				var userid = toUserid(parsed.name);
 				if (userid === this.user.get('userid') && parsed.name !== this.user.get('name')) {
-					$.post(app.user.getActionPHP(), {
+					$.post(app.user.getActionPHP(), app.user.getActionData({
 						act: 'changeusername',
 						username: parsed.name
-					}, function () {}, 'text');
+					}), function () {}, 'text');
 				}
 
 				var settings = _.clone(app.user.get('settings'));
@@ -1576,13 +1584,13 @@ function toId() {
 			var serverid = Config.server.id && toID(Config.server.id.split(':')[0]);
 			var silent = data.silent;
 			if (serverid && serverid !== 'showdown') id = serverid + '-' + id;
-			$.post(app.user.getActionPHP(), {
+			$.post(app.user.getActionPHP(), app.user.getActionData({
 				act: 'uploadreplay',
 				log: data.log,
 				serverid: serverid,
 				password: data.password || '',
 				id: id
-			}, function (data) {
+			}), function (data) {
 				if (silent) return;
 				var sData = data.split(':');
 				if (sData[0] === 'success') {

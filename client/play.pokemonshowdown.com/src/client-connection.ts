@@ -402,9 +402,8 @@ export const PSLoginServer = new class {
 		const loginServerHost = Config.loginServerHost || (location.pathname.endsWith('.html') ? Config.routes.client : '');
 		if (loginServerHost) {
 			url = 'https://' + loginServerHost + url;
-			if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
-				data.sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',');
-			}
+			data.sid = typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string' ?
+				POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',') : 'a';
 		}
 		return PSStorage.request('POST', url, data) || Net(url).get({ method: 'POST', body: data }).then(
 			res => res ?? null
