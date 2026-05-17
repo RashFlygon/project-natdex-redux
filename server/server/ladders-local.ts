@@ -23,8 +23,324 @@ import { FS, Utils } from '../lib';
 type LadderRow = [string, number, string, number, number, number, string];
 /** formatid: ladder */
 type LadderCache = Map<string, LadderRow[] | Promise<LadderRow[]>>;
+type ChampionsSeasonSnapshotRow = {
+	userid: string,
+	username: string,
+	placement: number,
+	rank: LadderRank,
+	elo: number,
+	wins: number,
+	losses: number,
+	ties: number,
+};
+type ChampionsSeasonSnapshot = {
+	id: string,
+	name: string,
+	timestamp: number,
+	rows: ChampionsSeasonSnapshotRow[],
+};
+type ChampionsSeason = {
+	id: string,
+	name: string,
+	startedAt: number,
+	snapshots: ChampionsSeasonSnapshot[],
+};
+type ChampionsSeasonData = {
+	current: {id: string, name: string, startedAt: number},
+	seasons: {[id: string]: ChampionsSeason},
+};
+export type LadderRank = {
+	id: 'champion' | 'masterball' | 'ultraball' | 'greatball' | 'pokeball' | 'unranked',
+	name: string,
+	placement: number,
+	percentile: number,
+};
 
 const ladderCaches: LadderCache = new Map();
+export const CHAMPIONS_RANK_FORMAT = 'gen9natdexchampionsou';
+const CHAMPIONS_SEASONS_PATH = 'config/champions/seasons.json';
+const CHAMPIONS_RANK_THRESHOLDS = {
+	champion: 1350,
+	masterball: 1300,
+	ultraball: 1200,
+	greatball: 1100,
+	pokeball: 1001,
+};
+const CHAMPIONS_MAX_CHAMPIONS = 15;
+
+export function clearLocalLadderCache(formatid?: string) {
+	if (formatid) {
+		ladderCaches.delete(formatid);
+		return;
+	}
+	ladderCaches.clear();
+}
+
+export function getLadderRankFromPlacement(placement: number, total: number, elo = 1000): LadderRank | null {
+	if (!placement || !total) return null;
+	const percentile = placement / total;
+	if (placement <= CHAMPIONS_MAX_CHAMPIONS && elo >= CHAMPIONS_RANK_THRESHOLDS.champion) {
+		return {id: 'champion', name: 'Champion', placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.masterball) {
+		return {id: 'masterball', name: `Master Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.masterball, CHAMPIONS_RANK_THRESHOLDS.champion)}`, placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.ultraball) {
+		return {id: 'ultraball', name: `Ultra Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.ultraball, CHAMPIONS_RANK_THRESHOLDS.masterball)}`, placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.greatball) {
+		return {id: 'greatball', name: `Great Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.greatball, CHAMPIONS_RANK_THRESHOLDS.ultraball)}`, placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.pokeball) {
+		return {id: 'pokeball', name: `Poke Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.pokeball, CHAMPIONS_RANK_THRESHOLDS.greatball)}`, placement, percentile};
+	}
+	return defaultRank(placement);
+}
+
+function rankDivisionByElo(elo: number, min: number, max: number) {
+	const step = (max - min) / 3;
+	if (elo >= max - step) return 'I';
+	if (elo >= max - step * 2) return 'II';
+	return 'III';
+}
+
+function defaultRank(placement = 0): LadderRank {
+	return {id: 'pokeball', name: 'Poke Ball III', placement, percentile: 1};
+}
+
+function unrankedRank(): LadderRank {
+	return {id: 'unranked', name: 'Unranked', placement: 0, percentile: 1};
+}
+
+function rankPayload(rank: LadderRank | null, elo = 0) {
+	if (!rank) return '';
+	return `${rank.id},${rank.name},${rank.placement},${Math.round(elo)}`;
+}
+
+function addChampionsRankProtocol(room: AnyObject, username: string, rank: LadderRank | null, elo: number) {
+	if (!room.battle || !rank) return;
+	const userid = toID(username);
+	const player = room.battle.players?.find((curPlayer: AnyObject) => curPlayer.id === userid || toID(curPlayer.name) === userid);
+	if (!player?.slot) return;
+	room.add(`|championsrank|${player.slot}|${rank.id}|${rank.name}|${Math.round(elo)}|${rank.placement || ''}`);
+}
+
+function rankIconHTML(rank: LadderRank | null) {
+	if (!rank) return '';
+	const title = Utils.escapeHTML(rank.name);
+	const item = {
+		champion: "King's Rock",
+		masterball: 'Master Ball',
+		ultraball: 'Ultra Ball',
+		greatball: 'Great Ball',
+		pokeball: 'Poke Ball',
+		unranked: '',
+	}[rank.id];
+	if (!item) return '';
+	return `<psicon item="${Utils.escapeHTML(item)}" class="rankicon rankicon-${rank.id}" title="${title}" aria-label="${title}"></psicon>`;
+}
+
+function rankIconSpanHTML(rank: LadderRank | null) {
+	if (!rank) return '';
+	const title = Utils.escapeHTML(rank.name);
+	return `<span class="rankicon rankicon-${rank.id}" title="${title}" aria-label="${title}"></span>`;
+}
+
+function rankNameWithIconHTML(rank: LadderRank | null) {
+	if (!rank) return 'Unranked';
+	const division = rank.id === 'champion' ? '' : rank.name.split(' ').at(-1);
+	return `${rankIconSpanHTML(rank)}${division ? ` ${Utils.escapeHTML(division)}` : ''}`;
+}
+
+function estimatedGXE(elo: number) {
+	return Math.max(1, Math.min(99.9, 50 + (elo - 1000) / 18));
+}
+
+function estimatedGlicko(elo: number, games: number) {
+	const rating = Math.round(elo + 170);
+	const deviation = Math.max(25, Math.round(85 - Math.min(games, 80) * 0.75));
+	return {rating, deviation};
+}
+
+function nextRankTarget(rank: LadderRank | null, total: number) {
+	if (!rank || rank.id === 'champion' || !total) return null;
+	const boundaries = [
+		{name: 'Champion', elo: CHAMPIONS_RANK_THRESHOLDS.champion},
+		{name: 'Master Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.champion - (CHAMPIONS_RANK_THRESHOLDS.champion - CHAMPIONS_RANK_THRESHOLDS.masterball) / 3)},
+		{name: 'Master Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.champion - (CHAMPIONS_RANK_THRESHOLDS.champion - CHAMPIONS_RANK_THRESHOLDS.masterball) * 2 / 3)},
+		{name: 'Master Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.masterball},
+		{name: 'Ultra Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.masterball - (CHAMPIONS_RANK_THRESHOLDS.masterball - CHAMPIONS_RANK_THRESHOLDS.ultraball) / 3)},
+		{name: 'Ultra Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.masterball - (CHAMPIONS_RANK_THRESHOLDS.masterball - CHAMPIONS_RANK_THRESHOLDS.ultraball) * 2 / 3)},
+		{name: 'Ultra Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.ultraball},
+		{name: 'Great Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.ultraball - (CHAMPIONS_RANK_THRESHOLDS.ultraball - CHAMPIONS_RANK_THRESHOLDS.greatball) / 3)},
+		{name: 'Great Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.ultraball - (CHAMPIONS_RANK_THRESHOLDS.ultraball - CHAMPIONS_RANK_THRESHOLDS.greatball) * 2 / 3)},
+		{name: 'Great Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.greatball},
+		{name: 'Poke Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.greatball - (CHAMPIONS_RANK_THRESHOLDS.greatball - CHAMPIONS_RANK_THRESHOLDS.pokeball) / 3)},
+		{name: 'Poke Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.greatball - (CHAMPIONS_RANK_THRESHOLDS.greatball - CHAMPIONS_RANK_THRESHOLDS.pokeball) * 2 / 3)},
+		{name: 'Poke Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.pokeball},
+	];
+	const index = boundaries.findIndex(boundary => boundary.name === rank.name);
+	if (index <= 0) return null;
+	const target = boundaries[index - 1];
+	return {name: target.name, elo: target.elo};
+}
+
+function nextRankDistance(ladder: LadderRow[], index: number, rank: LadderRank | null) {
+	if (!rank || index < 0) return '';
+	const rankedRows = ladder.filter(row => row[1] > 1000);
+	const target = nextRankTarget(rank, rankedRows.length);
+	if (!target) return `Already at the top rank.`;
+	const row = ladder[index];
+	if (target.name === 'Champion' && rank.id === 'masterball') {
+		const placement = rankedRows.findIndex(curRow => curRow[0] === row[0]) + 1;
+		if (placement > CHAMPIONS_MAX_CHAMPIONS) return `Reach top ${CHAMPIONS_MAX_CHAMPIONS} and ${target.elo} Elo for Champion.`;
+	}
+	const eloNeeded = Math.max(1, Math.ceil(target.elo - row[1]));
+	return `~${eloNeeded} Elo from ${target.name}.`;
+}
+
+function championsRankDeltaHTML(name: string, oldElo: number, newElo: number, oldRank: LadderRank | null, newRank: LadderRank | null, ladder: LadderRow[], index: number) {
+	const eloDelta = Math.round(newElo) - Math.round(oldElo);
+	const signedDelta = `${eloDelta >= 0 ? '+' : ''}${eloDelta} Elo`;
+	const deltaClass = eloDelta > 0 ? 'good' : eloDelta < 0 ? 'bad' : 'neutral';
+	const oldName = oldRank?.name || 'Unranked';
+	const newName = newRank?.name || 'Unranked';
+	const transition = oldName === newName ?
+		`<strong class="champions-rank-title">${rankNameWithIconHTML(newRank)}</strong>` :
+		`${rankNameWithIconHTML(oldRank)} &rarr; <strong class="champions-rank-title">${rankNameWithIconHTML(newRank)}</strong>`;
+	const progress = nextRankDistance(ladder, index, newRank);
+	return `<div class="champions-rank-adjustment">` +
+		`${Utils.escapeHTML(name)}'s Champions rank: ${transition} ` +
+		`<small class="${deltaClass}">(${Utils.escapeHTML(signedDelta)})</small>` +
+		(progress ? `<br /><small>${Utils.escapeHTML(progress)}</small>` : '') +
+		`</div>`;
+}
+
+function defaultChampionsSeasonData(): ChampionsSeasonData {
+	const startedAt = Date.now();
+	return {
+		current: {id: 'season-1', name: 'Season 1', startedAt},
+		seasons: {
+			'season-1': {id: 'season-1', name: 'Season 1', startedAt, snapshots: []},
+		},
+	};
+}
+
+export function loadChampionsSeasons(): ChampionsSeasonData {
+	try {
+		const data = JSON.parse(FS(CHAMPIONS_SEASONS_PATH).readIfExistsSync() || 'null');
+		if (data?.current?.id && data.seasons?.[data.current.id]) return data;
+	} catch {}
+	return defaultChampionsSeasonData();
+}
+
+function saveChampionsSeasons(data: ChampionsSeasonData) {
+	FS(CHAMPIONS_SEASONS_PATH).writeUpdate(() => JSON.stringify(data, null, 2));
+}
+
+function getRowRank(row: LadderRow, placement: number, total: number): LadderRank {
+	if (row[1] <= 1000) return defaultRank(placement);
+	return getLadderRankFromPlacement(placement, total, row[1]) || defaultRank(placement);
+}
+
+function championsRows(ladder: LadderRow[], limit = Infinity): ChampionsSeasonSnapshotRow[] {
+	const rankedRows = ladder.filter(row => row[1] > 1000);
+	const placementByUserid = new Map<string, number>();
+	for (const [i, row] of rankedRows.entries()) placementByUserid.set(row[0], i + 1);
+	const rows: ChampionsSeasonSnapshotRow[] = [];
+	for (const row of rankedRows) {
+		if (rows.length >= limit) break;
+		const placement = placementByUserid.get(row[0]) || rows.length + 1;
+		rows.push({
+			userid: row[0],
+			username: row[2],
+			placement,
+			rank: getRowRank(row, placement, rankedRows.length),
+			elo: Math.round(row[1]),
+			wins: row[3],
+			losses: row[4],
+			ties: row[5],
+		});
+	}
+	return rows;
+}
+
+export async function startChampionsSeason(name?: string) {
+	const data = loadChampionsSeasons();
+	const nextNumber = Object.keys(data.seasons).length + 1;
+	const id = `season-${nextNumber}`;
+	const startedAt = Date.now();
+	const seasonName = name?.trim() || `Season ${nextNumber}`;
+	data.current = {id, name: seasonName, startedAt};
+	data.seasons[id] = {id, name: seasonName, startedAt, snapshots: []};
+	saveChampionsSeasons(data);
+	return data.seasons[id];
+}
+
+export async function snapshotChampionsSeason() {
+	const data = loadChampionsSeasons();
+	const season = data.seasons[data.current.id] || (
+		data.seasons[data.current.id] = {...data.current, snapshots: []}
+	);
+	const store = new LadderStore(CHAMPIONS_RANK_FORMAT);
+	const ladder = await store.getLadder();
+	const snapshot: ChampionsSeasonSnapshot = {
+		id: `${season.id}-snapshot-${season.snapshots.length + 1}`,
+		name: season.name,
+		timestamp: Date.now(),
+		rows: championsRows(ladder, 500),
+	};
+	season.snapshots.push(snapshot);
+	saveChampionsSeasons(data);
+	return snapshot;
+}
+
+export async function getChampionsProfile(userid: string) {
+	const store = new LadderStore(CHAMPIONS_RANK_FORMAT);
+	const ladder = await store.getLadder();
+	const index = store.indexOfUser(userid);
+	const data = loadChampionsSeasons();
+	const season = data.seasons[data.current.id] || {...data.current, snapshots: []};
+	if (index < 0) {
+		const rank = unrankedRank();
+		return {
+			formatid: CHAMPIONS_RANK_FORMAT,
+			rank: {id: rank.id, name: rank.name, placement: rank.placement, elo: 1000},
+			record: {wins: 0, losses: 0, ties: 0},
+			season: {id: season.id, name: season.name},
+		};
+	}
+	const row = ladder[index];
+	if (!row || row[3] + row[4] + row[5] <= 0) {
+		const rank = row?.[1] && row[1] > 1000 ? null : unrankedRank();
+		if (rank) {
+			return {
+				formatid: CHAMPIONS_RANK_FORMAT,
+				rank: {id: rank.id, name: rank.name, placement: rank.placement, elo: Math.round(row?.[1] || 1000)},
+				record: {wins: row?.[3] || 0, losses: row?.[4] || 0, ties: row?.[5] || 0},
+				season: {id: season.id, name: season.name},
+			};
+		}
+		return null;
+	}
+	const rankedRows = ladder.filter(curRow => curRow[1] > 1000);
+	const placement = row[1] > 1000 ? rankedRows.findIndex(curRow => curRow[0] === row[0]) + 1 : index + 1;
+	const rank = getRowRank(row, placement, rankedRows.length);
+	let bestPlacement: number | undefined;
+	let peakElo: number | undefined;
+	for (const snapshot of season.snapshots) {
+		const snapshotRow = snapshot.rows.find(curRow => curRow.userid === row[0]);
+		if (!snapshotRow) continue;
+		if (!bestPlacement || snapshotRow.placement < bestPlacement) bestPlacement = snapshotRow.placement;
+		if (!peakElo || snapshotRow.elo > peakElo) peakElo = snapshotRow.elo;
+	}
+	return {
+		formatid: CHAMPIONS_RANK_FORMAT,
+		rank: {id: rank.id, name: rank.name, placement: rank.placement, elo: Math.round(row[1])},
+		record: {wins: row[3], losses: row[4], ties: row[5]},
+		season: {id: season.id, name: season.name, bestPlacement, peakElo},
+	};
+}
 
 export class LadderStore {
 	formatid: string;
@@ -121,6 +437,30 @@ export class LadderStore {
 		return -1;
 	}
 
+	getRankAtIndex(index: number) {
+		if (!this.ladder || index < 0) return null;
+		if (this.ladder[index][1] <= 1000) return defaultRank(index + 1);
+		const rankedRows = this.ladder.filter(row => row[1] > 1000);
+		const placement = rankedRows.findIndex(row => row[0] === this.ladder![index][0]) + 1;
+		return getLadderRankFromPlacement(placement, rankedRows.length, this.ladder[index][1]);
+	}
+
+	async getRank(username: string, createIfNeeded = false) {
+		await this.getLadder();
+		const index = this.indexOfUser(username, createIfNeeded);
+		if (createIfNeeded) void this.save();
+		return this.getRankAtIndex(index) || defaultRank();
+	}
+
+	async getRankPayload(username: string, createIfNeeded = false) {
+		if (this.formatid !== CHAMPIONS_RANK_FORMAT) return '';
+		await this.getLadder();
+		const index = this.indexOfUser(username, createIfNeeded);
+		if (createIfNeeded) void this.save();
+		const row = index >= 0 ? this.ladder![index] : null;
+		return rankPayload(this.getRankAtIndex(index) || defaultRank(), row?.[1] || 1000);
+	}
+
 	/**
 	 * Returns [formatid, html], where html is an the HTML source of a
 	 * ladder toplist, to be displayed directly in the ladder tab of the
@@ -130,16 +470,63 @@ export class LadderStore {
 		const formatid = this.formatid;
 		const name = Dex.formats.get(formatid).name;
 		const ladder = await this.getLadder();
-		let buf = `<h3>${name} Top 100</h3>`;
+		const showChampionsRank = formatid === CHAMPIONS_RANK_FORMAT;
+		if (showChampionsRank) return [formatid, this.getChampionsTopHTML(ladder, prefix)];
+		let buf = `<h3>${name} Top ${prefix ? 'Search' : '500'}</h3>`;
 		buf += `<table>`;
-		buf += `<tr><th>` + ['', 'Username', '<abbr title="Elo rating">Elo</abbr>', 'W', 'L', 'T'].join(`</th><th>`) + `</th></tr>`;
+		buf += `<tr><th>` + [
+			'', ...(showChampionsRank ? ['Rank'] : []), 'Username', '<abbr title="Elo rating">Elo</abbr>', 'W', 'L', 'T',
+		].join(`</th><th>`) + `</th></tr>`;
 		for (const [i, row] of ladder.entries()) {
+			if (!prefix && i >= 500) break;
 			if (prefix && !row[0].startsWith(prefix)) continue;
+			const rank = this.getRankAtIndex(i);
 			buf += `<tr><td>` + [
-				i + 1, row[2], `<strong>${Math.round(row[1])}</strong>`, row[3], row[4], row[5],
+				i + 1,
+				...(showChampionsRank ? [`${rankIconHTML(rank)} ${rank ? rank.name : ''}`] : []),
+				Utils.escapeHTML(row[2]),
+				`<strong>${Math.round(row[1])}</strong>`,
+				row[3], row[4], row[5],
 			].join(`</td><td>`) + `</td></tr>`;
 		}
 		return [formatid, buf];
+	}
+
+	getChampionsTopHTML(ladder: LadderRow[], prefix?: string) {
+		const season = loadChampionsSeasons().seasons[loadChampionsSeasons().current.id] || loadChampionsSeasons().seasons['season-1'];
+		const rows = championsRows(ladder);
+		let buf = `<div class="champions-ladder">`;
+		buf += `<h3>NatDex Champions OU Ladder</h3>`;
+		buf += `<div class="champions-ladder-summary">`;
+		buf += `<strong>${Utils.escapeHTML(season?.name || 'Season 1')}</strong>`;
+		buf += `</div>`;
+		if (prefix) {
+			buf += `<p><small>Showing users matching <strong>${Utils.escapeHTML(prefix)}</strong>.</small></p>`;
+		}
+		buf += `<table><tr><th>` + [
+			'Placement', 'Tier', 'Username', '<abbr title="Elo rating">Elo</abbr>',
+			'<abbr title="Estimated local GXE for prototype display">GXE</abbr>',
+			'<abbr title="Estimated local Glicko-1 rating for prototype display">Glicko-1</abbr>',
+		].join(`</th><th>`) + `</th></tr>`;
+		let shown = 0;
+		for (const row of rows) {
+			if (!prefix && shown >= 500) break;
+			if (prefix && !row.userid.startsWith(prefix)) continue;
+			const games = row.wins + row.losses + row.ties;
+			const glicko = estimatedGlicko(row.elo, games);
+			buf += `<tr><td>` + [
+				row.placement,
+				`${rankIconHTML(row.rank)} ${Utils.escapeHTML(row.rank.name)}`,
+				Utils.escapeHTML(row.username),
+				`<strong>${row.elo}</strong>`,
+				`${estimatedGXE(row.elo).toFixed(1)}%`,
+				`<em>${glicko.rating} <small>&plusmn; ${glicko.deviation}</small></em>`,
+			].join(`</td><td>`) + `</td></tr>`;
+			shown++;
+		}
+		if (!shown) buf += `<tr><td colspan="6"><em>No matching ranked users.</em></td></tr>`;
+		buf += `</table></div>`;
+		return buf;
 	}
 
 	/**
@@ -205,9 +592,11 @@ export class LadderStore {
 		try {
 			const p1index = this.indexOfUser(p1name, true);
 			const p1elo = ladder[p1index][1];
+			const p1oldRank = formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p1index) : null;
 
 			let p2index = this.indexOfUser(p2name, true);
 			const p2elo = ladder[p2index][1];
+			const p2oldRank = formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p2index) : null;
 
 			this.updateRow(ladder[p1index], p1score, p2elo);
 			this.updateRow(ladder[p2index], p2score, p1elo);
@@ -251,6 +640,10 @@ export class LadderStore {
 			const p2 = Users.getExact(p2name);
 			if (p2) p2.mmrCache[formatid] = +p2newElo;
 			void this.save();
+			const p1finalIndex = this.indexOfUser(p1name);
+			const p2finalIndex = this.indexOfUser(p2name);
+			const p1newRank = formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p1finalIndex) : null;
+			const p2newRank = formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p2finalIndex) : null;
 
 			if (!room.battle) {
 				Monitor.warn(`room expired before ladder update was received`);
@@ -268,6 +661,12 @@ export class LadderStore {
 			room.addRaw(
 				Utils.html`${p2name}'s rating: ${Math.round(p2elo)} &rarr; <strong>${Math.round(p2newElo)}</strong><br />(${reasons})`
 			);
+			if (formatid === CHAMPIONS_RANK_FORMAT) {
+				room.addRaw(championsRankDeltaHTML(p1name, p1elo, p1newElo, p1oldRank, p1newRank, ladder, p1finalIndex));
+				room.addRaw(championsRankDeltaHTML(p2name, p2elo, p2newElo, p2oldRank, p2newRank, ladder, p2finalIndex));
+				addChampionsRankProtocol(room, p1name, p1newRank, p1newElo);
+				addChampionsRankProtocol(room, p2name, p2newRank, p2newElo);
+			}
 
 			room.update();
 		} catch (e: any) {

@@ -311,7 +311,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const isNatDexChampions = isNatDexChampionsClassic || isNatDexChampionsModern;
 		const natDexChampionsOUTestUnbans = new Set([
 			'darkrai', 'walkingwake', 'deoxysspeed', 'urshifu',
-			'genesect', 'dragapult', 'darmanitangalar', 'landorus',
+			'dragapult', 'landorus',
 			'starmiemega', 'alakazammega',
 		]);
 		const genNum = Math.floor(isDoubles ? -genIdent : genIdent);

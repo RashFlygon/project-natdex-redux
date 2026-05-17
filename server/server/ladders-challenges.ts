@@ -14,6 +14,7 @@ export class BattleReady {
 	readonly formatid: string;
 	readonly settings: User['battleSettings'];
 	readonly rating: number;
+	readonly rank: string;
 	readonly challengeType: ChallengeType;
 	readonly time: number;
 	constructor(
@@ -21,12 +22,14 @@ export class BattleReady {
 		formatid: string,
 		settings: User['battleSettings'],
 		rating = 0,
+		rank = '',
 		challengeType: ChallengeType = 'challenge'
 	) {
 		this.userid = userid;
 		this.formatid = formatid;
 		this.settings = settings;
 		this.rating = rating;
+		this.rank = rank;
 		this.challengeType = challengeType;
 		this.time = Date.now();
 	}

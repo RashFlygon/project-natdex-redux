@@ -1505,6 +1505,7 @@ export class ChatUserList extends preact.Component<{
 					} else {
 						color = BattleLog.usernameColor(userid);
 					}
+					const rankIcon = <span dangerouslySetInnerHTML={{__html: BattleLog.rankIconHTML(userid as ID, room.id)}} />;
 					return <li key={userid}><button class="userbutton username">
 						<em class={`group${['leadership', 'staff'].includes(group.type!) ? ' staffgroup' : ''}`}>
 							{groupSymbol}
@@ -1516,6 +1517,7 @@ export class ChatUserList extends preact.Component<{
 						) : (
 							<span style={`color:${color}`}>{name.slice(1)}</span>
 						)}
+						{rankIcon}
 					</button></li>;
 				})}
 			</ul>
@@ -1532,6 +1534,7 @@ export class ChatLog extends preact.Component<{
 		const room = this.props.room;
 		if (room.log) {
 			const elem = room.log.elem;
+			room.log.roomid = room.id;
 			this.base!.replaceChild(elem, this.base!.firstChild!);
 			elem.className = this.props.class;
 			elem.style.left = `${this.props.left || 0}px`;
@@ -1539,6 +1542,7 @@ export class ChatLog extends preact.Component<{
 		}
 		if (!this.props.noSubscription) {
 			room.log ||= new BattleLog(this.base!.firstChild as HTMLDivElement);
+			room.log.roomid = room.id;
 			room.log.getHighlight = room.handleHighlight;
 			if (room.backlog) {
 				const backlog = room.backlog;

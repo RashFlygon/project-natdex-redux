@@ -2014,6 +2014,7 @@
 			} else {
 				text += '<span style="' + color + '">' + BattleLog.escapeHTML(user.name) + '</span>';
 			}
+			if (BattleLog.rankIconHTML) text += BattleLog.rankIconHTML(userid);
 			text += '</button>';
 			text += '</li>';
 			return text;

@@ -35,6 +35,12 @@ export class MainMenuRoom extends PSRoom {
 			group?: string,
 			customgroup?: string,
 			rooms?: { [roomid: string]: { isPrivate?: true, p1?: string, p2?: string } },
+			championsProfile?: {
+				formatid: string,
+				rank: {id: string, name: string, placement: number, elo: number},
+				record: {wins: number, losses: number, ties: number},
+				season: {id: string, name: string, bestPlacement?: number, peakElo?: number},
+			},
 		},
 	} = {};
 	roomsCache: {
@@ -738,33 +744,96 @@ export class FormatDropdown extends preact.Component<{
 }> {
 	declare base?: HTMLButtonElement;
 	format = '';
+	championsDetailsRequested = '';
+	championsDetailsInterval: number | null = null;
+	componentDidMount() {
+		window.addEventListener('championsrankchange', this.handleChampionsRankChange);
+		this.championsDetailsInterval = window.setInterval(this.maybeRefreshChampionsDetails, 5000);
+		this.requestChampionsDetails();
+	}
+	componentWillUnmount() {
+		window.removeEventListener('championsrankchange', this.handleChampionsRankChange);
+		if (this.championsDetailsInterval) window.clearInterval(this.championsDetailsInterval);
+	}
+	componentDidUpdate() {
+		this.requestChampionsDetails();
+	}
+	requestChampionsDetails(force = false) {
+		if (!PS.user.userid || (!force && this.championsDetailsRequested === PS.user.userid)) return;
+		this.championsDetailsRequested = PS.user.userid;
+		void PS.mainmenu.query('userdetails' as ID, PS.user.userid).then(() => this.forceUpdate());
+	}
+	handleChampionsRankChange = (event: Event) => {
+		const detail = (event as CustomEvent).detail;
+		if (!PS.user.userid || detail?.userid !== PS.user.userid) return;
+		this.championsDetailsRequested = '';
+		this.forceUpdate();
+		this.requestChampionsDetails(true);
+	};
+	maybeRefreshChampionsDetails = () => {
+		const format = toID(this.props.format || this.format || this.props.defaultFormat || '');
+		if (format !== 'gen9natdexchampionsou') return;
+		this.requestChampionsDetails(true);
+	};
 	change = (e: Event) => {
 		if (!this.base) return;
 		this.format = this.base.value;
 		this.forceUpdate();
 		if (this.props.onChange) this.props.onChange(e);
 	};
+	renderChampionsRank(formatid: ID) {
+		if (formatid !== 'gen9natdexchampionsou') return null;
+		const detailsRank = PS.user.userid ?
+			(PS.mainmenu.userdetailsCache[PS.user.userid] as any)?.championsProfile?.rank :
+			null;
+		let rank = detailsRank ? {
+			id: detailsRank.id,
+			name: detailsRank.name,
+			elo: detailsRank.elo,
+		} : null;
+		if (!rank && PS.user.userid) {
+			try {
+				const storedRanks = JSON.parse(window.localStorage?.getItem('ChampionsRanks') || '{}');
+				const storedRank = storedRanks?.[PS.user.userid];
+				if (storedRank?.id && storedRank?.name) rank = storedRank;
+			} catch {}
+		}
+		if (!rank?.id || !rank?.name) rank = {id: 'unranked', name: 'Unranked', elo: 1000};
+		const elo = rank.elo ? `${rank.elo} Elo` : '';
+		return <div class="champions-format-rank">
+			{rank.id !== 'unranked' && <span class={`rankicon rankicon-${rank.id}`}></span>}
+			<strong>{rank.name}</strong>{elo && ` - ${elo}`}
+		</div>;
+	}
 	render() {
 		this.format = this.props.format || this.format || this.props.defaultFormat || '';
-		let [formatName, customRules] = this.format.split('@@@');
+		const [rawFormatName, customRules] = this.format.split('@@@');
+		const formatid = toID(rawFormatName);
+		let formatName = rawFormatName;
 		if (window.BattleLog) formatName = BattleLog.formatName(formatName);
 		if (this.props.format && !this.props.onChange) {
 			// There's intentionally no `disabled` prop. If this is out of sync
 			// with the `format` and `onChange` props, that's a bug.
 			return <button
-				name="format" value={this.format} class="select formatselect preselected" disabled
+				name="format" value={this.format}
+				class="select formatselect preselected"
+				disabled
 			>
 				{formatName}
 				{!!customRules && [<br />, <small>Custom rules: {customRules}</small>]}
 			</button>;
 		}
-		return <button
-			name="format" value={this.format} data-selecttype={this.props.selectType}
-			class="select formatselect" data-href="/formatdropdown" onChange={this.change}
-		>
-			{formatName || (!!this.props.placeholder && <em>{this.props.placeholder}</em>) || null}
-			{!!customRules && [<br />, <small>Custom rules: {customRules}</small>]}
-		</button>;
+		return <>
+			<button
+				name="format" value={this.format} data-selecttype={this.props.selectType}
+				class="select formatselect"
+				data-href="/formatdropdown" onChange={this.change}
+			>
+				{formatName || (!!this.props.placeholder && <em>{this.props.placeholder}</em>) || null}
+				{!!customRules && [<br />, <small>Custom rules: {customRules}</small>]}
+			</button>
+			{this.renderChampionsRank(formatid)}
+		</>;
 	}
 }
 

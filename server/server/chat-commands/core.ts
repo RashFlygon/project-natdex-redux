@@ -15,11 +15,12 @@
 
 /* eslint no-else-return: "error" */
 import { Utils, ProcessManager } from '../../lib';
+import { getChampionsProfile } from '../ladders-local';
 import type { UserSettings } from '../users';
 import type { GlobalPermission, RoomPermission } from '../user-groups';
 
 export const crqHandlers: { [k: string]: Chat.CRQHandler } = {
-	userdetails(target, user, trustable) {
+	async userdetails(target, user, trustable) {
 		if (target.length > 18) {
 			return null;
 		}
@@ -71,6 +72,7 @@ export const crqHandlers: { [k: string]: Chat.CRQHandler } = {
 			status: targetUser.getStatus() || undefined,
 			rooms: roomList,
 			friended: user.friends?.has(targetUser.id) || undefined,
+			championsProfile: await getChampionsProfile(targetUser.id) || undefined,
 		};
 	},
 	roomlist(target, user, trustable) {
@@ -1261,7 +1263,10 @@ export const commands: Chat.ChatCommands = {
 			const ladder = Ladders(battle.format);
 			const ready = await ladder.prepBattle(connection, 'challenge');
 			if (!ready) return;
-			playerOpts = ready.settings;
+			playerOpts = {
+				...ready.settings,
+				rank: ready.rank,
+			};
 		}
 
 		const fromUser = Ladders.challenges.accept(this);

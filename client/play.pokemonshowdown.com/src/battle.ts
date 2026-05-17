@@ -654,7 +654,9 @@ export class Side {
 	ally: Side | null = null;
 	avatar = 'unknown';
 	badges: string[] = [];
+	championsRank: {id: string, name: string, elo: string, placement?: string} | null = null;
 	rating = '';
+	rank = '';
 	totalPokemon = 6;
 	x = 0;
 	y = 0;
@@ -1023,6 +1025,86 @@ export class Side {
 		this.battle = null!;
 		this.foe = null!;
 	}
+}
+
+function renderChampionsRank(side: Side) {
+	const rank = side.championsRank;
+	if (!rank) return '';
+	const safeRankid = BattleLog.escapeHTML(rank.id);
+	const safeRankName = BattleLog.escapeHTML(rank.name);
+	const safeElo = /^\d+$/.test(rank.elo || '') ? BattleLog.escapeHTML(rank.elo) : '';
+	const safePlacement = /^\d+$/.test(rank.placement || '') ? BattleLog.escapeHTML(rank.placement!) : '';
+	const title = `User is ${safeRankName} tier`;
+	const eloHTML = safeElo ? `<span class="rankbadge-elo">${safeElo} Elo</span>` : '';
+	const rankNameMatch = rank.name.match(/^(.*?)(?: (I|II|III))?$/);
+	const division = rankNameMatch?.[2] || '';
+	const divisionClass = division ? ` rankbadge-division-${division.toLowerCase()}` : '';
+	const divisionHTML = division ?
+		`<span class="rankbadge-division">${BattleLog.escapeHTML(division)}</span>` :
+		`<span class="rankbadge-division rankbadge-division-full">${safePlacement ? `#${safePlacement}` : 'Top'}</span>`;
+	return (
+		`<span class="rankbadges"><span class="rankbadge rankbadge-${safeRankid}${divisionClass}" title="${title}">` +
+		`<span class="rankbadge-banner"><span class="rankbadge-iconframe"><span class="rankicon rankicon-${safeRankid}" ` +
+		`style="background-image:url(${Dex.resourcePrefix}sprites/itemicons-sheet.png?v1)"></span></span>` +
+		`${divisionHTML}</span>${eloHTML}</span></span>`
+	);
+}
+
+function championsRankNameHTML(side: Side) {
+	const name = BattleLog.escapeHTML(side.name);
+	if (!side.championsRank) return `<strong>${name}</strong>`;
+	const safeRankid = BattleLog.escapeHTML(side.championsRank.id);
+	return `<strong class="champions-name champions-name-${safeRankid}">${name}</strong>`;
+}
+
+function getChampionsBackdropFromSides(sides: Side[]) {
+	const rankIds = sides.map(side => side.championsRank?.id);
+	if (rankIds.includes('champion')) return 'fx/bg-champions-champion.png';
+	if (rankIds.includes('masterball')) return 'fx/bg-champions-masterball.png';
+	return '';
+}
+
+function applyChampionsBackdrop(scene: BattleScene, sides: Side[]) {
+	const sceneAny = scene as BattleScene & {
+		applyChampionsBackdrop?: () => boolean,
+		backdropImage?: string,
+		setBgm?: (num: number) => void,
+		$bg?: JQuery,
+	};
+	if (typeof sceneAny.applyChampionsBackdrop === 'function') return sceneAny.applyChampionsBackdrop();
+	const bg = getChampionsBackdropFromSides(sides);
+	if (!bg) return false;
+	sceneAny.backdropImage = bg;
+	sceneAny.setBgm?.(-101);
+	sceneAny.$bg?.css('background-image', `url(/play.pokemonshowdown.com/${bg})`).attr('data-champions-bg', bg);
+	return true;
+}
+
+function ensureChampionsBackdropPatch(scene: BattleScene, sides: Side[]) {
+	const sceneAny = scene as BattleScene & {championsBackdropPatch?: boolean};
+	if (sceneAny.championsBackdropPatch) return;
+	const originalUpdateGen = scene.updateGen;
+	scene.updateGen = function () {
+		originalUpdateGen.call(this);
+		applyChampionsBackdrop(this, sides);
+	};
+	sceneAny.championsBackdropPatch = true;
+}
+
+function ensureChampionsRankSidebarPatch(scene: BattleScene) {
+	const patchedScene = scene as BattleScene & {championsRankSidebarPatch?: boolean};
+	if (patchedScene.championsRankSidebarPatch) return;
+	const originalGetSidebarHTML = patchedScene.getSidebarHTML;
+	if (originalGetSidebarHTML.toString().includes('championsRank')) return;
+	patchedScene.getSidebarHTML = function (side, posStr) {
+		let html = originalGetSidebarHTML.call(this, side, posStr);
+		if (!side.championsRank || html.includes('rankbadges')) return html;
+		const rankHTML = renderChampionsRank(side);
+		if (!rankHTML) return html;
+		html = html.replace(/<strong>[^<]*<\/strong>/, championsRankNameHTML(side));
+		return html.replace(/(<div class="trainersprite"[^>]*><\/div>)/, `$1${rankHTML}`);
+	};
+	patchedScene.championsRankSidebarPatch = true;
 }
 
 export interface PokemonDetails {
@@ -3685,6 +3767,14 @@ export class Battle {
 			side.setName(args[2]);
 			if (args[3]) side.setAvatar(args[3]);
 			if (args[4]) side.rating = args[4];
+			if (args[5]) {
+				side.rank = args[5];
+				const [id, name, placement, elo] = side.rank.split(',');
+				const userid = toID(side.name);
+				if (userid && id && name) {
+					BattleLog.setChampionsRank(userid, {id, name, placement, elo});
+				}
+			}
 			if (this.joinButtons) this.scene.hideJoinButtons();
 			this.log(args);
 			this.scene.updateSidebar(side);
@@ -3694,8 +3784,25 @@ export class Battle {
 			let side = this.getSide(args[1]);
 			// handle all the rendering further down
 			const badge = args.slice(2).join('|');
+			if (badge.startsWith('rank-')) break;
 			// (don't allow duping)
 			if (!side.badges.includes(badge)) side.badges.push(badge);
+			this.scene.updateSidebar(side);
+			break;
+		}
+		case 'championsrank': {
+			ensureChampionsBackdropPatch(this.scene, this.sides);
+			ensureChampionsRankSidebarPatch(this.scene);
+			let side = this.getSide(args[1]);
+			if (args[2] && args[3]) {
+				side.championsRank = {id: args[2], name: args[3], elo: args[4] || '', placement: args[5] || ''};
+				if (side.id) BattleLog.setChampionsRank(side.id, {
+					id: args[2], name: args[3], elo: args[4] || '', placement: args[5] || '',
+				});
+			} else {
+				side.championsRank = null;
+			}
+			if (!applyChampionsBackdrop(this.scene, this.sides)) this.scene.updateGen();
 			this.scene.updateSidebar(side);
 			break;
 		}

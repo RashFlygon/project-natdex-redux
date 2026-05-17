@@ -108,6 +108,7 @@ export class RoomBattlePlayer extends RoomGamePlayer<RoomBattle> {
 	 */
 	knownActive: boolean;
 	invite: ID;
+	rank: string;
 	/**
 	 * Has the simulator received this player's team yet?
 	 * Basically always yes except when creating a 4-player battle,
@@ -133,6 +134,7 @@ export class RoomBattlePlayer extends RoomGamePlayer<RoomBattle> {
 
 		this.knownActive = true;
 		this.invite = '';
+		this.rank = '';
 		this.hasTeam = false;
 
 		if (user) {
@@ -465,6 +467,7 @@ export interface RoomBattlePlayerOptions {
 	/** should be '' for random teams */
 	team?: string;
 	rating?: number;
+	rank?: string;
 	inviteOnly?: boolean;
 	hidden?: boolean;
 }
@@ -657,7 +660,7 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 
 		void this.stream.write(`>${player.slot} undo`);
 	}
-	override joinGame(user: User, slot?: SideID, playerOpts?: { team?: string }) {
+	override joinGame(user: User, slot?: SideID, playerOpts?: Partial<RoomBattlePlayerOptions>) {
 		if (user.id in this.playerTable) {
 			user.popup(`You have already joined this battle.`);
 			return false;
@@ -1012,7 +1015,7 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		if (player && !player.active) {
 			player.active = true;
 			this.timer.checkActivity();
-			this.room.add(`|player|${player.slot}|${user.name}|${user.avatar}|`);
+			this.room.add(`|player|${player.slot}|${user.name}|${user.avatar}||${player.rank}`);
 			Chat.runHandlers('onBattleJoin', player.slot, user, this);
 		}
 	}
@@ -1075,11 +1078,13 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		this[slot] = player;
 
 		if (playerOpts) {
+			player.rank = playerOpts.rank || '';
 			const options = {
 				name: player.name,
 				avatar: user ? `${user.avatar}` : '',
 				team: playerOpts.team || undefined,
 				rating: Math.round(playerOpts.rating || 0),
+				rank: playerOpts.rank || undefined,
 			};
 			void this.stream.write(`>player ${slot} ${JSON.stringify(options)}`);
 			player.hasTeam = true;
@@ -1157,7 +1162,7 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		return new RoomBattlePlayer(user, this, num);
 	}
 
-	override setPlayerUser(player: RoomBattlePlayer, user: User | null, playerOpts?: { team?: string }) {
+	override setPlayerUser(player: RoomBattlePlayer, user: User | null, playerOpts?: Partial<RoomBattlePlayerOptions>) {
 		if (user === null && this.room.auth.get(player.id) === Users.PLAYER_SYMBOL) {
 			this.room.auth.set(player.id, '+');
 		}
@@ -1166,19 +1171,22 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		player.invite = '';
 		const slot = player.slot;
 		if (user) {
+			player.rank = playerOpts?.rank || player.rank || '';
 			player.active = user.inRooms.has(this.roomid);
 			player.knownActive = true;
 			const options = {
 				name: player.name,
 				avatar: user.avatar,
 				team: playerOpts?.team,
+				rank: playerOpts?.rank,
 			};
 			void this.stream.write(`>player ${slot} ` + JSON.stringify(options));
 			if (playerOpts) player.hasTeam = true;
 
-			this.room.add(`|player|${slot}|${player.name}|${user.avatar}|`);
+			this.room.add(`|player|${slot}|${player.name}|${user.avatar}||${player.rank}`);
 			Chat.runHandlers('onBattleJoin', slot as string, user, this);
 		} else {
+			player.rank = '';
 			player.active = false;
 			player.knownActive = false;
 			const options = {
@@ -1227,8 +1235,19 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		if (!delayStart) {
 			Rooms.global.onCreateBattleRoom(users as User[], this.room, { rated: this.rated });
 			this.started = true;
+			this.addChampionsRanks();
 		} else if (delayStart === 'multi') {
 			this.room.add(`|uhtml|invites|<div class="broadcast broadcast-blue"><strong>This is a 4-player challenge battle</strong><br />The players will need to add more players before the battle can start.</div>`);
+		}
+	}
+
+	addChampionsRanks() {
+		if (this.format !== 'gen9natdexchampionsou') return;
+		for (const player of this.players) {
+			if (!player.rank) continue;
+			const [rankid, rankName, placement, elo] = player.rank.split(',');
+			if (!rankid || !rankName) continue;
+			this.room.add(`|championsrank|${player.slot}|${rankid}|${rankName}|${elo || ''}|${placement || ''}`);
 		}
 	}
 

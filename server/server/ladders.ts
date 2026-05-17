@@ -67,6 +67,7 @@ class Ladder extends LadderStore {
 		}
 
 		let rating = 0;
+		let rank = '';
 		let valResult;
 		let removeNicknames = !!(user.locked || user.namelocked);
 
@@ -110,6 +111,7 @@ class Ladder extends LadderStore {
 				TeamValidatorAsync.get(this.formatid).validateTeam(team, { removeNicknames, user: uid }),
 				this.getRating(uid),
 			]);
+			rank = await this.getRankPayload(uid, true);
 			if (uid !== user.id) {
 				// User feedback for renames handled elsewhere.
 				return null;
@@ -122,6 +124,7 @@ class Ladder extends LadderStore {
 			}
 			const validator = TeamValidatorAsync.get(this.formatid);
 			valResult = await validator.validateTeam(team, { removeNicknames, user: user.id });
+			rank = await this.getRankPayload(user.id, false);
 		}
 
 		if (!valResult.startsWith('1')) {
@@ -135,7 +138,7 @@ class Ladder extends LadderStore {
 		const settings = { ...user.battleSettings, team: valResult.slice(1) };
 		user.battleSettings.inviteOnly = false;
 		user.battleSettings.hidden = false;
-		return new BattleReady(userid, this.formatid, settings, rating, challengeType);
+		return new BattleReady(userid, this.formatid, settings, rating, rank, challengeType);
 	}
 
 	static getChallenging(userid: ID) {
@@ -457,6 +460,7 @@ class Ladder extends LadderStore {
 				user,
 				team: ready.settings.team,
 				rating: ready.rating,
+				rank: ready.rank,
 				hidden: ready.settings.hidden,
 				inviteOnly: ready.settings.inviteOnly,
 			});

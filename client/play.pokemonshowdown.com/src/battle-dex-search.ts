@@ -376,6 +376,7 @@ export class DexSearch {
 			}
 
 			let typeIndex = DexSearch.typeTable[type];
+			if (this.typedSearch?.isHiddenSearchResult(type, id)) continue;
 
 			// For performance, with a query length of 1, we only fill the first bucket
 			if (query.length === 1 && typeIndex !== (searchType ? searchTypeIndex : 1)) continue;
@@ -410,6 +411,7 @@ export class DexSearch {
 				matchEnd = query.length;
 				if (matchEnd) matchEnd += (BattleSearchIndexOffset[i][matchEnd - 1] || '0').charCodeAt(0) - 48;
 			}
+			if (this.typedSearch?.isHiddenSearchResult(type, id)) continue;
 
 			// some aliases are substrings
 			if (queryAlias === id && query !== id) continue;
@@ -797,6 +799,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 
 			for (const id in this.getTable()) {
 				if (!(id in legalityFilter)) {
+					if (this.isHiddenSearchResult(this.searchType, id as ID)) continue;
 					this.baseIllegalResults.push([this.searchType, id as ID]);
 					this.illegalReasons[id] = 'Illegal';
 				}
@@ -1021,11 +1024,21 @@ abstract class BattleTypedSearch<T extends SearchType> {
 	abstract getBaseResults(): SearchRow[];
 	abstract filter(input: SearchRow, filters: string[][]): boolean;
 	defaultFilter?(input: SearchRow[]): SearchRow[];
+	isHiddenSearchResult(type: SearchType, id: ID): boolean {
+		return false;
+	}
 	abstract sort(input: SearchRow[], sortCol: string, reverseSort?: boolean): SearchRow[];
 }
 
 class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 	override sortRow: SearchRow = ['sortpokemon', ''];
+	override isHiddenSearchResult(type: SearchType, id: ID): boolean {
+		if (type !== 'pokemon' || this.format !== 'ou') return false;
+		if (this.formatType !== 'natdexchampsclassic' && this.formatType !== 'natdexchampsmodern') return false;
+
+		const species = this.dex.species.get(id);
+		return species.baseSpecies === 'Genesect' || species.id === 'darmanitangalar' || species.id === 'darmanitangalarzen';
+	}
 	getTable() {
 		return BattlePokedex;
 	}
@@ -1304,6 +1317,8 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 				return true;
 			});
 		}
+
+		tierSet = tierSet.filter(([type, id]) => !this.isHiddenSearchResult(type as SearchType, id as ID));
 
 		return tierSet;
 	}

@@ -35,8 +35,12 @@ const natDexChampionsSinglesBans = [
 ];
 
 const natDexChampionsSinglesTestingUnbans = [
-	'Darkrai', 'Walking Wake', 'Deoxys-Speed', 'Urshifu', 'Genesect', 'Dragapult',
-	'Darmanitan-Galar', 'Landorus', 'Alakazam-Mega', 'Alakazite',
+	'Darkrai', 'Walking Wake', 'Deoxys-Speed', 'Urshifu', 'Dragapult',
+	'Landorus', 'Alakazam-Mega', 'Alakazite',
+];
+
+const natDexChampionsMoveUnbans = [
+	'Light of Ruin',
 ];
 
 const validateNatDexChampionsSet = function (this: any, set: any) {
@@ -67,12 +71,12 @@ const natDexChampionsModernDoublesBans = [
 
 const natDexChampionsSinglesOUBans = [
 	...natDexChampionsSinglesBans,
-	'Shedinja',
+	'Darmanitan-Galar', 'Genesect', 'Shedinja',
 ];
 
 const natDexChampionsModernSinglesOUBans = [
 	...natDexChampionsModernSinglesBans,
-	'Shedinja',
+	'Darmanitan-Galar', 'Genesect', 'Shedinja',
 ];
 
 const AllFormats: import('../sim/dex-formats').FormatList = [
@@ -373,7 +377,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
 		banlist: natDexChampionsSinglesOUBans,
-		unbanlist: natDexChampionsSinglesTestingUnbans,
+		unbanlist: [...natDexChampionsSinglesTestingUnbans, ...natDexChampionsMoveUnbans],
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -382,6 +386,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		gameType: 'doubles',
 		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause'],
 		banlist: natDexChampionsDoublesBans,
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -393,7 +398,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesOUBans,
-		unbanlist: natDexChampionsSinglesTestingUnbans,
+		unbanlist: [...natDexChampionsSinglesTestingUnbans, ...natDexChampionsMoveUnbans],
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -403,6 +408,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		searchShow: false,
 		ruleset: ['Standard Doubles', 'NatDex Mod', 'Tera Type Preview', 'Evasion Abilities Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernDoublesBans,
+		unbanlist: natDexChampionsMoveUnbans,
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
@@ -413,18 +419,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions Draft",
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
-		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
 		name: "[Gen 9] NatDex Champions Doubles Draft",
 		mod: 'gen9natdexchampsclassic',
 		gameType: 'doubles',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
-		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
 		section: "NatDex Champions Modern Draft",
@@ -434,20 +436,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions (Modern) Draft",
 		mod: 'gen9natdexchampsmodern',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
-		banlist: natDexChampionsModernSinglesBans,
-		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles Draft",
 		mod: 'gen9natdexchampsmodern',
 		gameType: 'doubles',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
-		banlist: natDexChampionsModernDoublesBans,
-		onValidateSet: validateNatDexChampionsSet,
 	},
 
 	// Unofficial Metagames

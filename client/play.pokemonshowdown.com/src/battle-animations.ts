@@ -152,7 +152,7 @@ export class BattleScene implements BattleSceneStub {
 		this.$battle = $('<div class="innerbattle"></div>');
 		this.$frame.append(this.$battle);
 
-		this.$bg = $('<div class="backdrop" style="background-image:url(' + Dex.resourcePrefix + this.backdropImage + ');display:block;opacity:0.8"></div>');
+		this.$bg = $('<div class="backdrop" style="background-image:url(' + this.getBackdropURL() + ');display:block;opacity:0.8"></div>');
 		this.$terrain = $('<div class="weather"></div>');
 		this.$weather = $('<div class="weather"></div>');
 		this.$bgEffect = $('<div></div>');
@@ -608,8 +608,38 @@ export class BattleScene implements BattleSceneStub {
 
 		this.backdropImage = bg;
 		if (this.$bg) {
-			this.$bg.css('background-image', `url(${Dex.resourcePrefix}${this.backdropImage})`);
+			this.$bg
+				.css('background-image', `url(${this.getBackdropURL()})`)
+				.attr('data-champions-bg', '');
 		}
+		this.applyChampionsBackdrop();
+	}
+
+	getChampionsBackdrop() {
+		const championsRankIds = this.battle.sides.map(side => side.championsRank?.id);
+		if (championsRankIds.includes('champion')) return 'fx/bg-champions-champion.png';
+		if (championsRankIds.includes('masterball')) return 'fx/bg-champions-masterball.png';
+		return '';
+	}
+
+	applyChampionsBackdrop() {
+		const bg = this.getChampionsBackdrop();
+		if (!bg) return false;
+		this.backdropImage = bg;
+		this.setBgm(-101);
+		if (this.$bg) {
+			this.$bg
+				.css('background-image', `url(${this.getBackdropURL()})`)
+				.attr('data-champions-bg', bg);
+		}
+		return true;
+	}
+
+	getBackdropURL() {
+		if (this.backdropImage.startsWith('fx/bg-champions-')) {
+			return `/play.pokemonshowdown.com/${this.backdropImage}`;
+		}
+		return `${Dex.resourcePrefix}${this.backdropImage}`;
 	}
 
 	getDetailsText(pokemon: Pokemon) {
@@ -714,6 +744,29 @@ export class BattleScene implements BattleSceneStub {
 		pokemonhtml = '<div class="teamicons">' + pokemonhtml + '</div>';
 		const ratinghtml = side.rating ? ` title="Rating: ${BattleLog.escapeHTML(side.rating)}"` : ``;
 		const faded = side.name ? `` : ` style="opacity: 0.4"`;
+		const rankNameClass = side.championsRank ? ` champions-name champions-name-${BattleLog.escapeHTML(side.championsRank.id)}` : ``;
+		let rankbadgehtml = '';
+		if (side.championsRank) {
+			const rank = side.championsRank;
+			const safeRankid = BattleLog.escapeHTML(rank.id);
+			const safeRankName = BattleLog.escapeHTML(rank.name);
+			const safeElo = /^\d+$/.test(rank.elo || '') ? BattleLog.escapeHTML(rank.elo) : '';
+			const safePlacement = /^\d+$/.test(rank.placement || '') ? BattleLog.escapeHTML(rank.placement!) : '';
+			const title = `User is ${safeRankName} tier`;
+			const eloHTML = safeElo ? `<span class="rankbadge-elo">${safeElo} Elo</span>` : '';
+			const rankNameMatch = rank.name.match(/^(.*?)(?: (I|II|III))?$/);
+			const division = rankNameMatch?.[2] || '';
+			const divisionClass = division ? ` rankbadge-division-${division.toLowerCase()}` : '';
+			const divisionHTML = division ?
+				`<span class="rankbadge-division">${BattleLog.escapeHTML(division)}</span>` :
+				`<span class="rankbadge-division rankbadge-division-full">${safePlacement ? `#${safePlacement}` : 'Top'}</span>`;
+			rankbadgehtml = (
+				`<span class="rankbadges"><span class="rankbadge rankbadge-${safeRankid}${divisionClass}" title="${title}">` +
+				`<span class="rankbadge-banner"><span class="rankbadge-iconframe"><span class="rankicon rankicon-${safeRankid}" ` +
+				`style="background-image:url(${Dex.resourcePrefix}sprites/itemicons-sheet.png?v1)"></span></span>` +
+				`${divisionHTML}</span>${eloHTML}</span></span>`
+			);
+		}
 		let badgehtml = '';
 		if (side.badges.length) {
 			badgehtml = '<span class="badges">';
@@ -738,9 +791,9 @@ export class BattleScene implements BattleSceneStub {
 			badgehtml += '</span>';
 		}
 		return (
-			`<div class="trainer trainer-${posStr}"${faded}><strong>${BattleLog.escapeHTML(side.name)}</strong>` +
+			`<div class="trainer trainer-${posStr}"${faded}><strong class="${rankNameClass.trim()}">${BattleLog.escapeHTML(side.name)}</strong>` +
 			`<div class="trainersprite"${ratinghtml} style="background-image:url(${Dex.resolveAvatar(side.avatar)})">` +
-			`</div>${badgehtml}${pokemonhtml}</div>`
+			`</div>${rankbadgehtml}${badgehtml}${pokemonhtml}</div>`
 		);
 	}
 	updateSidebar(side: Side) {
