@@ -914,10 +914,10 @@
 				buf += '<p class="error">' + BattleLog.escapeHTML(data.error) + '</p>';
 				if (data.error.indexOf('inappropriate') >= 0) {
 					// log out so we don't autologin to a bad name if we refresh
-					$.post(app.user.getActionPHP(), {
+					$.post(app.user.getActionPHP(), app.user.addLoginServerSid({
 						act: 'logout',
 						userid: app.user.get('userid')
-					});
+					}));
 
 					buf += '<p>Keep in mind these rules:</p>';
 					buf += '<ol>';
@@ -1002,12 +1002,12 @@
 			this.$el.html(buf);
 		},
 		submit: function (data) {
-			$.post(app.user.getActionPHP(), {
+			$.post(app.user.getActionPHP(), app.user.addLoginServerSid({
 				act: 'changepassword',
 				oldpassword: data.oldpassword,
 				password: data.password,
 				cpassword: data.cpassword
-			}, Storage.safeJSON(function (data) {
+			}), Storage.safeJSON(function (data) {
 				if (!data) data = {};
 				if (data.actionsuccess) {
 					app.addPopupMessage("Your password was successfully changed.");
@@ -1042,14 +1042,14 @@
 		submit: function (data) {
 			var name = data.name;
 			var captcha = data.captcha;
-			$.post(app.user.getActionPHP(), {
+			$.post(app.user.getActionPHP(), app.user.addLoginServerSid({
 				act: 'register',
 				username: name,
 				password: data.password,
 				cpassword: data.cpassword,
 				captcha: captcha,
 				challstr: app.user.challstr
-			}, Storage.safeJSON(function (data) {
+			}), Storage.safeJSON(function (data) {
 				if (!data) data = {};
 				var token = data.assertion;
 				if (data.curuser && data.curuser.loggedin) {

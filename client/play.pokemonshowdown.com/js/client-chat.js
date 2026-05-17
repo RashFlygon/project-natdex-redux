@@ -981,10 +981,10 @@
 				}
 
 				var self = this;
-				$.get(app.user.getActionPHP(), {
+				$.get(app.user.getActionPHP(), app.user.addLoginServerSid({
 					act: 'ladderget',
 					user: targets[0]
-				}, Storage.safeJSON(function (data) {
+				}), Storage.safeJSON(function (data) {
 					if (!data || !$.isArray(data)) return self.add('|raw|Error: corrupted ranking data');
 					var buffer = '<div class="ladder"><table><tr><td colspan="9">User: <strong>' + toName(targets[0]) + '</strong></td></tr>';
 					if (!data.length) {

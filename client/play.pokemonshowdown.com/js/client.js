@@ -217,10 +217,7 @@ function toId() {
 		 * domain in order to have access to the correct cookies.
 		 */
 		getActionPHP: function () {
-			var ret = '/~~' + Config.server.id + '/action.php';
-			if (Config.testclient) {
-				ret = 'https://' + Config.routes.client + ret;
-			}
+			var ret = 'https://play.pokemonshowdown.com/~~' + Config.server.id + '/action.php';
 			return (this.getActionPHP = function () {
 				return ret;
 			})();
@@ -984,10 +981,10 @@ function toId() {
 			if (!this.loadingTeam) {
 				var app = this;
 				this.loadingTeam = true;
-				$.get(app.user.getActionPHP(), {
+				$.get(app.user.getActionPHP(), app.user.addLoginServerSid({
 					act: 'getteam',
 					teamid: team.teamid
-				}, Storage.safeJSON(function (data) {
+				}), Storage.safeJSON(function (data) {
 					app.loadingTeam = false;
 					if (data.actionerror) {
 						return app.addPopupMessage("Error loading team: " + data.actionerror);
@@ -1177,10 +1174,10 @@ function toId() {
 
 				var userid = toUserid(parsed.name);
 				if (userid === this.user.get('userid') && parsed.name !== this.user.get('name')) {
-					$.post(app.user.getActionPHP(), {
+					$.post(app.user.getActionPHP(), app.user.addLoginServerSid({
 						act: 'changeusername',
 						username: parsed.name
-					}, function () {}, 'text');
+					}), function () {}, 'text');
 				}
 
 				var settings = _.clone(app.user.get('settings'));
@@ -1511,13 +1508,13 @@ function toId() {
 			var serverid = Config.server.id && toID(Config.server.id.split(':')[0]);
 			var silent = data.silent;
 			if (serverid && serverid !== 'showdown') id = serverid + '-' + id;
-			$.post(app.user.getActionPHP(), {
+			$.post(app.user.getActionPHP(), app.user.addLoginServerSid({
 				act: 'uploadreplay',
 				log: data.log,
 				serverid: serverid,
 				password: data.password || '',
 				id: id
-			}, function (data) {
+			}), function (data) {
 				if (silent) return;
 				var sData = data.split(':');
 				if (sData[0] === 'success') {

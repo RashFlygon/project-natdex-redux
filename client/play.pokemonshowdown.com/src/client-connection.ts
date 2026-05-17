@@ -398,10 +398,7 @@ export const PSLoginServer = new class {
 		// 	return Promise.resolve(null);
 		// }
 		data.act = act;
-		let url = '/~~' + PS.server.id + '/action.php';
-		if (location.pathname.endsWith('.html')) {
-			url = 'https://' + Config.routes.client + url;
-		}
+		const url = 'https://play.pokemonshowdown.com/~~' + PS.server.id + '/action.php';
 		if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
 			data.sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',');
 		} else if (!data.sid && Config.routes.client !== 'play.pokemonshowdown.com') {
