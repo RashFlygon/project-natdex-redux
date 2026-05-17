@@ -67,6 +67,7 @@ const CHAMPIONS_RANK_THRESHOLDS = {
 	pokeball: 1001,
 };
 const CHAMPIONS_MAX_CHAMPIONS = 15;
+const CHAMPIONS_MASTERBALL_PERCENTILE = 0.10;
 
 export function clearLocalLadderCache(formatid?: string) {
 	if (formatid) {
@@ -82,8 +83,8 @@ export function getLadderRankFromPlacement(placement: number, total: number, elo
 	if (placement <= CHAMPIONS_MAX_CHAMPIONS && elo >= CHAMPIONS_RANK_THRESHOLDS.champion) {
 		return {id: 'champion', name: 'Champion', placement, percentile};
 	}
-	if (elo >= CHAMPIONS_RANK_THRESHOLDS.masterball) {
-		return {id: 'masterball', name: `Master Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.masterball, CHAMPIONS_RANK_THRESHOLDS.champion)}`, placement, percentile};
+	if (percentile <= CHAMPIONS_MASTERBALL_PERCENTILE && elo >= CHAMPIONS_RANK_THRESHOLDS.masterball) {
+		return {id: 'masterball', name: `Master Ball ${rankDivisionByPercentile(percentile, CHAMPIONS_MASTERBALL_PERCENTILE)}`, placement, percentile};
 	}
 	if (elo >= CHAMPIONS_RANK_THRESHOLDS.ultraball) {
 		return {id: 'ultraball', name: `Ultra Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.ultraball, CHAMPIONS_RANK_THRESHOLDS.masterball)}`, placement, percentile};
@@ -101,6 +102,13 @@ function rankDivisionByElo(elo: number, min: number, max: number) {
 	const step = (max - min) / 3;
 	if (elo >= max - step) return 'I';
 	if (elo >= max - step * 2) return 'II';
+	return 'III';
+}
+
+function rankDivisionByPercentile(percentile: number, maxPercentile: number) {
+	const step = maxPercentile / 3;
+	if (percentile <= step) return 'I';
+	if (percentile <= step * 2) return 'II';
 	return 'III';
 }
 
@@ -164,11 +172,12 @@ function estimatedGlicko(elo: number, games: number) {
 
 function nextRankTarget(rank: LadderRank | null, total: number) {
 	if (!rank || rank.id === 'champion' || !total) return null;
+	const masterBallTop = Math.max(1, Math.ceil(total * CHAMPIONS_MASTERBALL_PERCENTILE));
 	const boundaries = [
-		{name: 'Champion', elo: CHAMPIONS_RANK_THRESHOLDS.champion},
-		{name: 'Master Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.champion - (CHAMPIONS_RANK_THRESHOLDS.champion - CHAMPIONS_RANK_THRESHOLDS.masterball) / 3)},
-		{name: 'Master Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.champion - (CHAMPIONS_RANK_THRESHOLDS.champion - CHAMPIONS_RANK_THRESHOLDS.masterball) * 2 / 3)},
-		{name: 'Master Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.masterball},
+		{name: 'Champion', elo: CHAMPIONS_RANK_THRESHOLDS.champion, placement: CHAMPIONS_MAX_CHAMPIONS},
+		{name: 'Master Ball I', elo: CHAMPIONS_RANK_THRESHOLDS.masterball, placement: Math.max(1, Math.ceil(masterBallTop / 3))},
+		{name: 'Master Ball II', elo: CHAMPIONS_RANK_THRESHOLDS.masterball, placement: Math.max(1, Math.ceil(masterBallTop * 2 / 3))},
+		{name: 'Master Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.masterball, placement: masterBallTop},
 		{name: 'Ultra Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.masterball - (CHAMPIONS_RANK_THRESHOLDS.masterball - CHAMPIONS_RANK_THRESHOLDS.ultraball) / 3)},
 		{name: 'Ultra Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.masterball - (CHAMPIONS_RANK_THRESHOLDS.masterball - CHAMPIONS_RANK_THRESHOLDS.ultraball) * 2 / 3)},
 		{name: 'Ultra Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.ultraball},
@@ -181,8 +190,7 @@ function nextRankTarget(rank: LadderRank | null, total: number) {
 	];
 	const index = boundaries.findIndex(boundary => boundary.name === rank.name);
 	if (index <= 0) return null;
-	const target = boundaries[index - 1];
-	return {name: target.name, elo: target.elo};
+	return boundaries[index - 1];
 }
 
 function nextRankDistance(ladder: LadderRow[], index: number, rank: LadderRank | null) {
@@ -194,6 +202,13 @@ function nextRankDistance(ladder: LadderRow[], index: number, rank: LadderRank |
 	if (target.name === 'Champion' && rank.id === 'masterball') {
 		const placement = rankedRows.findIndex(curRow => curRow[0] === row[0]) + 1;
 		if (placement > CHAMPIONS_MAX_CHAMPIONS) return `Reach top ${CHAMPIONS_MAX_CHAMPIONS} and ${target.elo} Elo for Champion.`;
+	}
+	if ('placement' in target) {
+		const placement = rankedRows.findIndex(curRow => curRow[0] === row[0]) + 1;
+		const needsPlacement = placement > target.placement;
+		const needsElo = row[1] < target.elo;
+		if (needsPlacement && needsElo) return `Reach top ${target.placement} and ${target.elo} Elo for ${target.name}.`;
+		if (needsPlacement) return `Reach top ${target.placement} for ${target.name}.`;
 	}
 	const eloNeeded = Math.max(1, Math.ceil(target.elo - row[1]));
 	return `~${eloNeeded} Elo from ${target.name}.`;
