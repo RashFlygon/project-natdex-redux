@@ -401,9 +401,11 @@ export const PSLoginServer = new class {
 		let url = '/~~' + PS.server.id + '/action.php';
 		if (location.pathname.endsWith('.html')) {
 			url = 'https://' + Config.routes.client + url;
-			if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
-				data.sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',');
-			}
+		}
+		if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
+			data.sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',');
+		} else if (!data.sid && Config.routes.client !== 'play.pokemonshowdown.com') {
+			data.sid = 'a';
 		}
 		return PSStorage.request('POST', url, data) || Net(url).get({ method: 'POST', body: data }).then(
 			res => res ?? null
