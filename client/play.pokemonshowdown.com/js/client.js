@@ -225,6 +225,14 @@ function toId() {
 				return ret;
 			})();
 		},
+		addLoginServerSid: function (data) {
+			if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
+				data.sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/%2C/g, ',');
+			} else if (!data.sid && Config.routes.client !== 'play.pokemonshowdown.com') {
+				data.sid = 'a';
+			}
+			return data;
+		},
 		/**
 		 * Process a signed assertion returned from the login server.
 		 * Emits the following events (arguments in brackets):
@@ -288,11 +296,11 @@ function toId() {
 
 			if (this.get('userid') !== userid) {
 				var self = this;
-				$.post(this.getActionPHP(), {
+				$.post(this.getActionPHP(), this.addLoginServerSid({
 					act: 'getassertion',
 					userid: userid,
 					challstr: this.challstr
-				}, function (data) {
+				}), function (data) {
 					self.finishRename(name, data);
 				});
 			} else {
@@ -301,12 +309,12 @@ function toId() {
 		},
 		passwordRename: function (name, password, special) {
 			var self = this;
-			$.post(this.getActionPHP(), {
+			$.post(this.getActionPHP(), this.addLoginServerSid({
 				act: 'login',
 				name: name,
 				pass: password,
 				challstr: this.challstr
-			}, Storage.safeJSON(function (data) {
+			}), Storage.safeJSON(function (data) {
 				if (data && data.curuser && data.curuser.loggedin) {
 					// success!
 					self.set('registered', data.curuser);
@@ -342,10 +350,10 @@ function toId() {
 				 */
 				this.challstr = challstr;
 				var self = this;
-				$.post(this.getActionPHP(), {
+				$.post(this.getActionPHP(), this.addLoginServerSid({
 					act: 'upkeep',
 					challstr: this.challstr
-				}, Storage.safeJSON(function (data) {
+				}), Storage.safeJSON(function (data) {
 					self.loaded = true;
 					if (!data.username) {
 						app.topbar.updateUserbar();
@@ -369,10 +377,10 @@ function toId() {
 		 * Log out from the server (but remain connected as a guest).
 		 */
 		logout: function () {
-			$.post(this.getActionPHP(), {
+			$.post(this.getActionPHP(), this.addLoginServerSid({
 				act: 'logout',
 				userid: this.get('userid')
-			});
+			}));
 			app.send('/logout');
 			app.trigger('init:socketclosed', "You have been logged out and disconnected.<br /><br />If you wanted to change your name while staying connected, use the 'Change Name' button or the '/nick' command.", false);
 			app.socket.close();
