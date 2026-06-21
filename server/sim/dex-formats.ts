@@ -281,7 +281,11 @@ export class RuleTable extends Map<string, string> {
 			if (format.mod === 'gen7letsgo') {
 				this.evLimit = this.has('lgpenormalrules') ? 0 : null;
 			}
-			if (format.mod === 'champions') {
+			if (
+				format.mod === 'champions' ||
+				format.mod === 'gen9natdexchampsmodern' ||
+				format.mod === 'gen9natdexchampsmodernma'
+			) {
 				this.evLimit = 66;
 			}
 			// Gen 6 hackmons also has a limit, which is currently implemented
@@ -436,6 +440,7 @@ export class Format extends BasicEffect implements Readonly<BasicEffect> {
 	declare readonly searchShow?: boolean;
 	declare readonly bestOfDefault?: boolean;
 	declare readonly teraPreviewDefault?: boolean;
+	declare readonly terastalClauseOption?: boolean;
 	declare readonly itemClauseDefault?: boolean;
 	declare readonly threads?: string[];
 	declare readonly tournamentShow?: boolean;
@@ -604,6 +609,7 @@ export class DexFormats {
 			if (format.tournamentShow === undefined) format.tournamentShow = true;
 			if (format.bestOfDefault === undefined) format.bestOfDefault = false;
 			if (format.teraPreviewDefault === undefined) format.teraPreviewDefault = false;
+			if (format.terastalClauseOption === undefined) format.terastalClauseOption = false;
 			if (format.itemClauseDefault === undefined) format.itemClauseDefault = false;
 			if (format.mod === undefined) format.mod = 'gen9';
 			if (!this.dex.dexes[format.mod]) throw new Error(`Format "${format.name}" requires nonexistent mod: '${format.mod}'`);

@@ -1127,7 +1127,11 @@ export class TeamValidator {
 		const dex = this.dex;
 
 		const allowAVs = !ruleTable.has('lgpenormalrules');
-		const useStatPoints = dex.currentMod === 'champions' || dex.currentMod === 'gen9natdexchampsmodern';
+		const useStatPoints = (
+			dex.currentMod === 'champions' ||
+			dex.currentMod === 'gen9natdexchampsmodern' ||
+			dex.currentMod === 'gen9natdexchampsmodernma'
+		);
 		const evLimit = ruleTable.evLimit;
 		const canBottleCap = dex.gen >= 7 && (set.level >= (dex.gen < 9 ? 100 : 50) || !ruleTable.has('obtainablemisc'));
 

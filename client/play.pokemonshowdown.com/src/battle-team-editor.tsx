@@ -127,6 +127,13 @@ export class TeamEditorState extends PSModel {
 			this.defaultLevel = 5;
 		}
 	}
+	usesStatPoints() {
+		const isChampionsModern = this.format.includes('champions') || this.format.includes('ndcmodern');
+		return isChampionsModern && !(
+			this.format.includes('natdexchampionsclassic') || this.format.includes('natdexchampsclassic') ||
+			this.format === 'gen9ndcdraftma' || this.format === 'gen9ndcdoublesdraftma'
+		);
+	}
 	setSearchType(type: SearchType, i: number, value?: string) {
 		const set = this.sets[i];
 		this.search.setType(type, this.format, set);
@@ -665,7 +672,8 @@ export class TeamEditorState extends PSModel {
 		}
 	}
 	getStat(stat: StatName, set: Dex.PokemonSet, ivOverride: number, evOverride?: number, natureOverride?: number) {
-		const supportsEVs = !this.isLetsGo;
+		const useStatPoints = this.usesStatPoints();
+		const supportsEVs = !this.isLetsGo && !useStatPoints;
 		const supportsAVs = !supportsEVs;
 
 		// do this after setting set.evs because it's assumed to exist
@@ -681,8 +689,20 @@ export class TeamEditorState extends PSModel {
 
 		if (stat === 'hp') {
 			if (baseStat === 1) return 1;
+			if (useStatPoints) return baseStat + ev + 75;
 			if (!supportsEVs) return Math.trunc(Math.trunc(2 * baseStat + iv + 100) * level / 100 + 10) + (supportsAVs ? ev : 0);
 			return Math.trunc(Math.trunc(2 * baseStat + iv + Math.trunc(ev / 4) + 100) * level / 100 + 10);
+		}
+		if (useStatPoints) {
+			let val = baseStat + ev + 75;
+			if (natureOverride) {
+				val *= natureOverride;
+			} else if (BattleNatures[set.nature!]?.plus === stat) {
+				val *= 1.1;
+			} else if (BattleNatures[set.nature!]?.minus === stat) {
+				val *= 0.9;
+			}
+			return Math.trunc(val);
 		}
 		let val = Math.trunc(Math.trunc(2 * baseStat + iv + Math.trunc(ev / 4)) * level / 100 + 5);
 		if (!supportsEVs) {
@@ -2838,6 +2858,7 @@ class StatForm extends preact.Component<{
 	};
 	maxEVs() {
 		const editor = this.props.editor;
+		if (editor.usesStatPoints()) return 66;
 		const useEVs = !editor.isLetsGo && editor.gen >= 3;
 		return useEVs ? 510 : Infinity;
 	}
@@ -2849,12 +2870,13 @@ class StatForm extends preact.Component<{
 
 		const nature = BattleNatures[set.nature || 'Serious'];
 
-		const useEVs = !editor.isLetsGo;
+		const useStatPoints = editor.usesStatPoints();
+		const useEVs = !editor.isLetsGo && !useStatPoints;
 		// const useAVs = !useEVs && team.format.endsWith('norestrictions');
-		const maxEV = useEVs ? 252 : 200;
-		const stepEV = useEVs ? 4 : 1;
+		const maxEV = useStatPoints ? 32 : useEVs ? 252 : 200;
+		const stepEV = useStatPoints ? 1 : useEVs ? 4 : 1;
 		const defaultEV = useEVs && editor.gen <= 2 && !set.evs ? maxEV : 0;
-		const useIVs = editor.gen > 2;
+		const useIVs = editor.gen > 2 && !useStatPoints;
 
 		// label column
 		const statNames = {
@@ -2895,9 +2917,9 @@ class StatForm extends preact.Component<{
 						<th>{/* Stat name */}</th>
 						<th>Base</th>
 						<th class="setstatbar">{/* Stat bar */}</th>
-						<th>{useEVs ? 'EVs' : 'AVs'}</th>
+						<th>{useStatPoints ? 'SPs' : useEVs ? 'EVs' : 'AVs'}</th>
 						<th>{/* EV slider */}</th>
-						<th>{useIVs ? 'IVs' : 'DVs'}</th>
+						<th>{useStatPoints ? '' : useIVs ? 'IVs' : 'DVs'}</th>
 						<th>{/* Final stat */}</th>
 					</tr>
 					{stats.map(([statID, statName, stat]) => <tr>
@@ -2915,7 +2937,7 @@ class StatForm extends preact.Component<{
 							onInput={this.changeEV} onChange={this.changeEV}
 						/></td>
 						<td><input
-							name={`iv-${statID}`} min={0} max={useIVs ? 31 : 15} placeholder={`${defaultIVs[statID]}`} style="width:40px"
+							name={`iv-${statID}`} min={0} max={useIVs ? 31 : 15} placeholder={`${defaultIVs[statID]}`} style={`width:40px;${useStatPoints ? 'display:none' : ''}`}
 							type="number" inputMode="numeric" class="textbox default-placeholder" onInput={this.changeIV} onChange={this.changeIV}
 						/></td>
 						<td style="text-align:right"><strong>{stat}</strong></td>
