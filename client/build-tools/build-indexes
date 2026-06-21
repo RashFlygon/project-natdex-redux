@@ -281,7 +281,8 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 	const STADIUM = [2.04, 1.04];
 	const NATDEX = [9.1, 8.1];
 	const OTHER = [
-		9.9, 9.672, 9.671, 9.67, 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2, -9.672, -9.671, -9.4, -9.401,
+		9.9, 9.674, 9.673, 9.672, 9.671, 9.67, 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2,
+		-9.674, -9.673, -9.672, -9.671, -9.4, -9.401,
 		8.6, 8.4, 8.2, -8.4, -8.6,
 		7.1,
 		5.1,
@@ -308,11 +309,19 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const isChampions = genIdent === 9.67;
 		const isNatDexChampionsClassic = Math.abs(genIdent) === 9.671;
 		const isNatDexChampionsModern = Math.abs(genIdent) === 9.672;
-		const isNatDexChampions = isNatDexChampionsClassic || isNatDexChampionsModern;
+		const isNatDexChampionsClassicMA = Math.abs(genIdent) === 9.673;
+		const isNatDexChampionsModernMA = Math.abs(genIdent) === 9.674;
+		const isNatDexChampions = (
+			isNatDexChampionsClassic || isNatDexChampionsModern ||
+			isNatDexChampionsClassicMA || isNatDexChampionsModernMA
+		);
+		const natDexChampionsOUTeambuilderBans = new Set([
+			'alakazammega', 'darmanitangalar', 'darmanitangalarzen', 'dragapult',
+			'genesect', 'genesectburn', 'genesectchill', 'genesectdouse', 'genesectshock',
+			'landorus', 'melmetal', 'roaringmoon', 'shedinja', 'starmiemega', 'urshifu',
+		]);
 		const natDexChampionsOUTestUnbans = new Set([
-			'darkrai', 'walkingwake', 'deoxysspeed', 'urshifu',
-			'genesect', 'dragapult', 'darmanitangalar', 'landorus',
-			'starmiemega', 'alakazammega',
+			'darkrai', 'walkingwake', 'deoxysspeed',
 		]);
 		const genNum = Math.floor(isDoubles ? -genIdent : genIdent);
 		const isBW1 = genIdent === 5.1;
@@ -334,6 +343,8 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (isChampions) genStr = 'champions';
 			if (isNatDexChampionsClassic) genStr = 'gen9natdexchampsclassic';
 			if (isNatDexChampionsModern) genStr = 'gen9natdexchampsmodern';
+			if (isNatDexChampionsClassicMA) genStr = 'gen9natdexchampsclassicma';
+			if (isNatDexChampionsModernMA) genStr = 'gen9natdexchampsmodernma';
 			return genStr;
 		})();
 		// process.stdout.write("" + gen + (isDoubles ? " doubles" : "") + "... ");
@@ -448,7 +459,9 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 				if (isNatDexChampions) {
 					if (species.isNonstandard && !['Past', 'Unobtainable'].includes(species.isNonstandard)) return 'Illegal';
+					if (!isDoubles && natDexChampionsOUTeambuilderBans.has(species.id)) return 'Uber';
 					if (!isDoubles && natDexChampionsOUTestUnbans.has(species.id)) return 'OU';
+					if ((species.natDexTier || species.tier) === 'UUBL') return 'UU';
 					return species.natDexTier || species.tier;
 				}
 				return species.tier;
@@ -1092,7 +1105,10 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			BattleTeambuilderTable['champions'].learnsets[id][moveid] = '9a';
 		}
 	}
-	for (const modid of ['gen9natdexchampsclassic', 'gen9natdexchampsmodern']) {
+	for (const modid of [
+		'gen9natdexchampsclassic', 'gen9natdexchampsclassicma',
+		'gen9natdexchampsmodern', 'gen9natdexchampsmodernma',
+	]) {
 		const modLearnsets = Dex.mod(modid).data.Learnsets;
 		for (const id in modLearnsets) {
 			const species = Dex.mod(modid).species.get(id);
@@ -1388,7 +1404,8 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 
 	for (const mod of [
 		'gen3rs', 'gen3frlg', 'gen5bw1', 'gen7letsgo', 'gen8bdsp', 'gen9ssb', 'gen9legendsou', 'champions',
-		'gen9natdexchampsclassic', 'gen9natdexchampsmodern',
+		'gen9natdexchampsclassic', 'gen9natdexchampsclassicma',
+		'gen9natdexchampsmodern', 'gen9natdexchampsmodernma',
 	]) {
 		const modDex = Dex.mod(mod);
 		const modData = modDex.data;
