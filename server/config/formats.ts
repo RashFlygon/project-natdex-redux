@@ -25,7 +25,7 @@ const natDexChampionsSinglesBans = [
 	'Lugia', 'Lunala', 'Magearna', 'Marshadow', 'Mewtwo', 'Mewtwo-Mega-X', 'Mewtwo-Mega-Y',
 	'Miraidon', 'Naganadel', 'Necrozma-Dawn-Wings', 'Necrozma-Dusk-Mane', 'Necrozma-Ultra',
 	'Ogerpon-Hearthflame', 'Palafin', 'Palkia', 'Palkia-Origin', 'Pheromosa', 'Rayquaza',
-	'Rayquaza-Mega', 'Reshiram', 'Roaring Moon', 'Salamence-Mega', 'Shaymin-Sky', 'Sneasler',
+	'Rayquaza-Mega', 'Reshiram', 'Salamence-Mega', 'Shaymin-Sky', 'Sneasler',
 	'Solgaleo', 'Spectrier', 'Ursaluna-Bloodmoon', 'Xerneas', 'Yveltal', 'Zacian',
 	'Zacian-Crowned', 'Zamazenta-Crowned', 'Zekrom', 'Zygarde', 'Zygarde-Complete',
 	'Arena Trap', 'Moody', 'Power Construct', 'Shadow Tag', 'Blastoisinite', 'Blazikenite',
@@ -35,21 +35,82 @@ const natDexChampionsSinglesBans = [
 ];
 
 const natDexChampionsSinglesTestingUnbans = [
-	'Darkrai', 'Walking Wake', 'Deoxys-Speed', 'Urshifu', 'Dragapult',
-	'Landorus', 'Alakazam-Mega', 'Alakazite',
+	'Darkrai', 'Walking Wake', 'Deoxys-Speed',
 ];
 
 const natDexChampionsMoveUnbans = [
 	'Light of Ruin',
 ];
 
+const natDexChampionsPokebilitiesAAAUberBanExceptions = new Set([
+	'Deoxys-Speed',
+	'Melmetal', 'Roaring Moon',
+]);
+
+const natDexChampionsPokebilitiesAAAInheritedPokemonBans = new Set([
+	'Annihilape', 'Arceus', 'Baxcalibur', 'Calyrex-Ice', 'Calyrex-Shadow', 'Chi-Yu', 'Chien-Pao',
+	'Deoxys-Attack', 'Dialga', 'Dialga-Origin', 'Espathra', 'Eternatus', 'Flutter Mane',
+	'Giratina', 'Giratina-Origin', 'Gouging Fire', 'Groudon', 'Ho-Oh', 'Iron Bundle',
+	'Koraidon', 'Kyogre', 'Kyurem-Black', 'Kyurem-White', 'Lugia', 'Lunala', 'Magearna',
+	'Mewtwo', 'Miraidon', 'Necrozma-Dawn-Wings', 'Necrozma-Dusk-Mane', 'Ogerpon-Hearthflame',
+	'Palkia', 'Palkia-Origin', 'Rayquaza', 'Reshiram', 'Shaymin-Sky', 'Sneasler', 'Solgaleo',
+	'Spectrier', 'Ursaluna-Bloodmoon', 'Zacian', 'Zacian-Crowned', 'Zekrom',
+]);
+
+const natDexChampionsPokebilitiesAAAPokemonBans = natDexChampionsSinglesBans.filter(ban => (
+	!natDexChampionsPokebilitiesAAAUberBanExceptions.has(ban) &&
+	!natDexChampionsPokebilitiesAAAInheritedPokemonBans.has(ban) &&
+	!ban.includes('Mega') &&
+	![
+		'Arena Trap', 'Moody', 'Power Construct', 'Shadow Tag', 'Blastoisinite', 'Blazikenite',
+		'Gengarite', 'Kangaskhanite', 'King\'s Rock', 'Lucarionite', 'Metagrossite', 'Quick Claw',
+		'Razor Fang', 'Salamencite', 'Assist', 'Baton Pass', 'Last Respects', 'Shed Tail',
+	].includes(ban)
+));
+
+const natDexChampionsPokebilitiesAAABans = [
+	...natDexChampionsPokebilitiesAAAPokemonBans,
+	'Gengar-Mega', 'Gengarite',
+	'Spicy Spray',
+	'Electric Surge + Surge Surfer', 'Hadron Engine + Surge Surfer',
+];
+
+const natDexChampionsPokebilitiesAAAUnbans = [
+	'Deoxys-Speed',
+	'Melmetal', 'Roaring Moon',
+	...natDexChampionsMoveUnbans,
+];
+
 const validateNatDexChampionsSet = function (this: any, set: any) {
 	if (
 		this.toID(set.species).startsWith('greninja') &&
 		this.toID(set.ability) === 'battlebond' &&
-		this.toID(set.item) === 'greninjaite'
+		this.toID(set.item) === 'greninjite'
 	) {
-		return [`Greninja with Battle Bond cannot hold Greninjaite.`];
+		return [`Greninja with Battle Bond cannot hold Greninjite.`];
+	}
+};
+
+const validateNatDexChampionsOUSet = function (this: any, set: any) {
+	const problems = validateNatDexChampionsSet.call(this, set);
+	if (problems) return problems;
+	if (this.toID(set.species) === 'landorus') {
+		return [`Landorus is banned.`];
+	}
+};
+
+const validateNatDexChampionsPokebilitiesAAASet = function (this: any, set: any) {
+	const species = this.dex.species.get(set.species);
+	const abilities = new Set([this.toID(set.ability)]);
+	for (const key of Object.keys(species.abilities)) {
+		if (key === 'S' || (key === 'H' && species.unreleasedHidden)) continue;
+		abilities.add(this.toID(species.abilities[key as "0" | "1" | "H" | "S"]));
+	}
+	if (abilities.has('surgesurfer') && abilities.has('hadronengine')) {
+		return [`${set.name || set.species} has the banned combination of Surge Surfer and Hadron Engine.`];
+	}
+	if (abilities.has('surgesurfer') && abilities.has('electricsurge')) {
+		return [`${set.name || set.species} has the banned combination of Surge Surfer and Electric Surge.`];
 	}
 };
 
@@ -69,14 +130,19 @@ const natDexChampionsModernDoublesBans = [
 	'Hidden Power',
 ];
 
+const natDexChampionsOUBaseBans = natDexChampionsSinglesBans.filter(ban => ban !== 'Annihilape');
+const natDexChampionsModernOUBaseBans = natDexChampionsModernSinglesBans.filter(ban => ban !== 'Annihilape');
+
 const natDexChampionsSinglesOUBans = [
-	...natDexChampionsSinglesBans,
-	'Darmanitan-Galar', 'Genesect', 'Shedinja',
+	...natDexChampionsOUBaseBans,
+	'Alakazam-Mega', 'Darmanitan-Galar', 'Dragapult', 'Genesect', 'Melmetal', 'Roaring Moon',
+	'Raichu-Mega-Y', 'Raichunite Y', 'Shedinja', 'Starmie-Mega', 'Urshifu-Single-Strike',
 ];
 
 const natDexChampionsModernSinglesOUBans = [
-	...natDexChampionsModernSinglesBans,
-	'Darmanitan-Galar', 'Genesect', 'Shedinja',
+	...natDexChampionsModernOUBaseBans,
+	'Alakazam-Mega', 'Darmanitan-Galar', 'Dragapult', 'Genesect', 'Melmetal', 'Roaring Moon',
+	'Raichu-Mega-Y', 'Raichunite Y', 'Shedinja', 'Starmie-Mega', 'Urshifu-Single-Strike',
 ];
 
 const AllFormats: import('../sim/dex-formats').FormatList = [
@@ -378,7 +444,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
 		banlist: natDexChampionsSinglesOUBans,
 		unbanlist: [...natDexChampionsSinglesTestingUnbans, ...natDexChampionsMoveUnbans],
-		onValidateSet: validateNatDexChampionsSet,
+		onValidateSet: validateNatDexChampionsOUSet,
 	},
 	{
 		name: "[Gen 9] NatDex Champions Doubles",
@@ -390,6 +456,41 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		onValidateSet: validateNatDexChampionsSet,
 	},
 	{
+		name: "[Gen 9] NatDex Champions Custom Game",
+		mod: 'gen9natdexchampsclassic',
+		searchShow: false,
+		tournamentShow: false,
+		debug: true,
+		battle: {trunc: Math.trunc},
+		terastalClauseOption: true,
+		ruleset: [
+			'NatDex Mod', 'Team Preview', 'HP Percentage Mod', 'Cancel Mod',
+			'Max Team Size = 24', 'Max Move Count = 24', 'Max Level = 9999', 'Default Level = 100',
+		],
+		unbanlist: natDexChampionsMoveUnbans,
+		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		section: "Metagames of the Month",
+	},
+	{
+		name: "[Gen 9] NatDex Champions UU",
+		mod: 'gen9natdexchampsclassic',
+		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause'],
+		banlist: [...natDexChampionsSinglesOUBans, 'OU', 'UUBL'],
+		unbanlist: natDexChampionsMoveUnbans,
+		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		name: "[Gen 9] NatDex Champions Pokebilities AAA",
+		desc: `Pok&eacute;mon use NatDex Champions mechanics and have all of their released abilities simultaneously, as well as one ability they cannot normally use.`,
+		mod: 'gen9natdexchampspokebilities',
+		ruleset: ['[Gen 9] Pokebilities AAA', 'NatDex Mod'],
+		banlist: natDexChampionsPokebilitiesAAABans,
+		unbanlist: natDexChampionsPokebilitiesAAAUnbans,
+		onValidateSet: validateNatDexChampionsPokebilitiesAAASet,
+	},
+	{
 		section: "NatDex Champions Modern",
 	},
 	{
@@ -399,7 +500,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
 		banlist: natDexChampionsModernSinglesOUBans,
 		unbanlist: [...natDexChampionsSinglesTestingUnbans, ...natDexChampionsMoveUnbans],
-		onValidateSet: validateNatDexChampionsSet,
+		onValidateSet: validateNatDexChampionsOUSet,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles",
@@ -419,20 +520,31 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions Draft",
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
 		unbanlist: natDexChampionsMoveUnbans,
-		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		name: "[Gen 9] NDC Draft M-A",
+		mod: 'gen9natdexchampsclassicma',
+		searchShow: false,
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions Doubles Draft",
 		mod: 'gen9natdexchampsclassic',
 		gameType: 'doubles',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
 		unbanlist: natDexChampionsMoveUnbans,
-		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		name: "[Gen 9] NDC Doubles Draft M-A",
+		mod: 'gen9natdexchampsclassicma',
+		gameType: 'doubles',
+		searchShow: false,
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
 		section: "NatDex Champions Modern Draft",
@@ -442,22 +554,31 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions (Modern) Draft",
 		mod: 'gen9natdexchampsmodern',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
-		banlist: natDexChampionsModernSinglesBans,
 		unbanlist: natDexChampionsMoveUnbans,
-		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		name: "[Gen 9] NDC Modern Draft M-A",
+		mod: 'gen9natdexchampsmodernma',
+		searchShow: false,
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles Draft",
 		mod: 'gen9natdexchampsmodern',
 		gameType: 'doubles',
 		searchShow: false,
-		itemClauseDefault: true,
 		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
-		banlist: natDexChampionsModernDoublesBans,
 		unbanlist: natDexChampionsMoveUnbans,
-		onValidateSet: validateNatDexChampionsSet,
+	},
+	{
+		name: "[Gen 9] NDC Modern Doubles Draft M-A",
+		mod: 'gen9natdexchampsmodernma',
+		gameType: 'doubles',
+		searchShow: false,
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		unbanlist: natDexChampionsMoveUnbans,
 	},
 
 	// Unofficial Metagames
@@ -1215,15 +1336,21 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] Pokebilities AAA",
 		desc: `Pok&eacute;mon have all of their released abilities simultaneously, as well as one ability they cannot normally use.`,
 		mod: 'pokebilities',
+		searchShow: false,
+		challengeShow: false,
+		tournamentShow: false,
 		ruleset: ['Standard OMs', '!Obtainable Abilities', 'Ability Clause = 1', 'AAA Restricted Abilities', 'Evasion Items Clause', 'Sleep Moves Clause', 'Terastal Clause'],
 		banlist: [
 			'Annihilape', 'Arcanine-Hisui', 'Arceus', 'Archaludon', 'Azumarill', 'Basculegion', 'Basculin', 'Baxcalibur', 'Blaziken', 'Braviary-Hisui', 'Calyrex-Ice', 'Calyrex-Shadow',
 			'Ceruledge', 'Chi-Yu', 'Chien-Pao', 'Cinccino', 'Clefable', 'Cloyster', 'Conkeldurr', 'Darkrai', 'Deoxys-Normal', 'Deoxys-Attack', 'Dialga', 'Dialga-Origin', 'Dragapult',
-			'Dragonite', 'Enamorus-Incarnate', 'Espathra', 'Eternatus', 'Excadrill', 'Flutter Mane', 'Gholdengo', 'Giratina', 'Giratina-Origin', 'Gliscor', 'Gouging Fire', 'Groudon',
+			'Diglett', 'Dragonite', 'Dugtrio', 'Enamorus-Incarnate', 'Espathra', 'Eternatus', 'Excadrill', 'Flutter Mane', 'Geodude-Alola', 'Gholdengo',
+			'Giratina', 'Giratina-Origin', 'Glalie', 'Gliscor', 'Golem-Alola', 'Gothita', 'Gothitelle', 'Gothorita', 'Gouging Fire', 'Graveler-Alola', 'Groudon',
 			'Hawlucha', 'Ho-Oh', 'Hoopa-Unbound', 'Iron Bundle', 'Iron Valiant', 'Kingambit', 'Kleavor', 'Koraidon', 'Kyogre', 'Kyurem', 'Kyurem-Black', 'Kyurem-White',
-			'Landorus-Incarnate', 'Lugia', 'Lunala', 'Magearna', 'Manaphy', 'Mewtwo', 'Miraidon', 'Necrozma-Dawn-Wings', 'Necrozma-Dusk-Mane', 'Noivern', 'Ogerpon-Hearthflame', 'Palkia',
+			'Koffing', 'Landorus-Incarnate', 'Lugia', 'Lunala', 'Magearna', 'Magnemite', 'Magneton', 'Magnezone', 'Manaphy', 'Mewtwo', 'Miraidon',
+			'Necrozma-Dawn-Wings', 'Necrozma-Dusk-Mane', 'Ninetales-Alola', 'Noivern', 'Nosepass', 'Ogerpon-Hearthflame', 'Palkia',
 			'Palkia-Origin', 'Porygon-Z', 'Raging Bolt', 'Rayquaza', 'Reshiram', 'Reuniclus', 'Roaring Moon', 'Serperior', 'Shaymin-Sky', 'Sneasler', 'Solgaleo', 'Spectrier', 'Ursaluna',
-			'Ursaluna-Bloodmoon', 'Urshifu-Single-Strike', 'Urshifu-Rapid-Strike', 'Volcarona', 'Walking Wake', 'Weavile', 'Yanmega', 'Zacian', 'Zacian-Crowned', 'Zapdos-Galar', 'Zekrom',
+			'Ursaluna-Bloodmoon', 'Urshifu-Single-Strike', 'Urshifu-Rapid-Strike', 'Probopass', 'Scovillain', 'Smeargle', 'Snorunt', 'Trapinch',
+			'Volcarona', 'Vulpix-Alola', 'Walking Wake', 'Weavile', 'Weezing', 'Weezing-Galar', 'Yanmega', 'Zacian', 'Zacian-Crowned', 'Zapdos-Galar', 'Zekrom',
 			'Zoroark-Hisui', 'Arena Trap', 'Magnet Pull', 'Moody', 'Neutralizing Gas', 'Shadow Tag',
 			'Regenerator + Wimp Out', 'Regenerator + Emergency Exit', 'Regenerator > 2', 'Drizzle + Swift Swim', 'Primordial Sea + Swift Swim', 'Drought + Chlorophyll',
 			'Desolate Land + Chlorophyll', 'Electric Surge + Surge Surfer', 'Hadron Engine + Surge Surfer', 'Hadron Engine + Quark Drive', 'Electric Surge + Quark Drive',
@@ -5889,13 +6016,21 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 type FormatListEntry = (typeof AllFormats)[number];
 const visibleFormatIds = new Set([
 	'gen9natdexchampionsou',
+	'gen9natdexchampionsuu',
 	'gen9natdexchampionsdoubles',
 	'gen9natdexchampionsdraft',
+	'gen9ndcdraftma',
 	'gen9natdexchampionsdoublesdraft',
+	'gen9ndcdoublesdraftma',
+	'gen9natdexchampionscustomgame',
+	'gen9natdexchampionspokebilitiesaaa',
 	'gen9natdexchampionsmodernou',
 	'gen9natdexchampionsmoderndoubles',
 	'gen9natdexchampionsmoderndraft',
+	'gen9ndcmoderndraftma',
 	'gen9natdexchampionsmoderndoublesdraft',
+	'gen9ndcmoderndoublesdraftma',
+	'gen9pokebilitiesaaa',
 ]);
 
 const isSectionHeader = (format: FormatListEntry): format is {section: string; column?: number} => {
