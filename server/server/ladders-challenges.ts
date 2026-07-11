@@ -1,4 +1,5 @@
 import type { ChallengeType } from './room-battle';
+import type { BattleBot } from './ladder-bots';
 
 /**
  * A bundle of:
@@ -14,20 +15,26 @@ export class BattleReady {
 	readonly formatid: string;
 	readonly settings: User['battleSettings'];
 	readonly rating: number;
+	readonly rank: string;
 	readonly challengeType: ChallengeType;
 	readonly time: number;
+	readonly bot: BattleBot | null;
 	constructor(
 		userid: ID,
 		formatid: string,
 		settings: User['battleSettings'],
 		rating = 0,
-		challengeType: ChallengeType = 'challenge'
+		rank = '',
+		challengeType: ChallengeType = 'challenge',
+		bot: BattleBot | null = null
 	) {
 		this.userid = userid;
 		this.formatid = formatid;
 		this.settings = settings;
 		this.rating = rating;
+		this.rank = rank;
 		this.challengeType = challengeType;
+		this.bot = bot;
 		this.time = Date.now();
 	}
 }

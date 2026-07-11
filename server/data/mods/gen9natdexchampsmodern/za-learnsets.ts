@@ -16498,7 +16498,16 @@ export const Learnsets: import('../../../sim/dex-species').ModdedLearnsetDataTab
 			whirlpool: ["9M", "9L21"],
 		},
 	},
-	tatsugiristretchy: {},
+	tatsugiridroopy: {
+		learnset: {
+			scald: ["9M"],
+		},
+	},
+	tatsugiristretchy: {
+		learnset: {
+			scald: ["9M"],
+		},
+	},
 	annihilape: {
 		learnset: {
 			bodyslam: ["9M"],

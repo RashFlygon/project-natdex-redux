@@ -409,6 +409,7 @@ interface PlayerOptions {
 	name?: string;
 	avatar?: string;
 	rating?: number;
+	rank?: string;
 	team?: PokemonSet[] | string | null;
 	seed?: PRNGSeed;
 }

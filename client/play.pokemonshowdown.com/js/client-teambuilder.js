@@ -4,18 +4,25 @@
 	var teams;
 
 	function getNatDexChampionsMod(format) {
+		if (format.includes('ndcmodern') && format.includes('ma')) return 'gen9natdexchampsmodernma';
+		if (format.includes('ndc') && format.includes('ma')) return 'gen9natdexchampsclassicma';
+		if (format.includes('natdexchampionslegends') || format.includes('natdexchampslegends')) return 'gen9natdexchampsmodern';
 		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return 'gen9natdexchampsmodern';
 		if (format.includes('natdexchampions') || format.includes('natdexchamps')) return 'gen9natdexchampsclassic';
 		return '';
 	}
 
 	function getNatDexChampionsDefaultLevel(format) {
+		if (format.includes('ndcmodern')) return 50;
+		if (format.includes('natdexchampionslegends') || format.includes('natdexchampslegends')) return 50;
 		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return 50;
 		return 100;
 	}
 
 	function isNatDexChampionsClassicFormat(format) {
+		if (format.includes('ndc') && !format.includes('ndcmodern')) return true;
 		return (format.includes('natdexchampions') || format.includes('natdexchamps')) &&
+			!format.includes('natdexchampionslegends') && !format.includes('natdexchampslegends') &&
 			!format.includes('natdexchampionsmodern') && !format.includes('natdexchampsmodern');
 	}
 
@@ -27,10 +34,24 @@
 	}
 
 	function usesChampionsStatPoints(format) {
+		if (format.includes('ndcmodern')) return true;
+		if (format.includes('ndc')) return false;
+		if (format.includes('natdexchampionslegends') || format.includes('natdexchampslegends')) return true;
 		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) return true;
 		if (format.includes('natdexchampions') || format.includes('natdexchamps')) return false;
 		return (format.includes('champions') || format.includes('champs')) &&
 			!format.includes('natdexchampionsclassic') && !format.includes('natdexchampsclassic');
+	}
+
+	function normalizeChampionsStatPointIVs(set) {
+		set.ivs = {
+			hp: 31,
+			atk: 31,
+			def: 31,
+			spa: 31,
+			spd: 31,
+			spe: 31
+		};
 	}
 
 	function supportsTeraType(format) {
@@ -2126,13 +2147,14 @@
 			var baseFormat = this.curTeam.format;
 			if (baseFormat.substr(-5) === 'draft') baseFormat = baseFormat.substr(0, baseFormat.length - 5);
 			var usesStatPoints = usesChampionsStatPoints(baseFormat);
+			if (usesStatPoints) normalizeChampionsStatPointIVs(set);
 			var supportsEVs = !baseFormat.includes('letsgo');
 			var isVGC = baseFormat.includes('battlespot') || baseFormat.includes('bss') ||
 				baseFormat.includes('vgc') || baseFormat.includes('battlefestival');
 			var isLC = baseFormat.startsWith('lc') || baseFormat.endsWith('lc');
 
 			// stat cell
-			var buf = '<span class="statrow statrow-head"><label></label> <span class="statgraph"></span> <em>' + (usesStatPoints ? 'Points' : supportsEVs ? 'EV' : 'AV') + '</em></span>';
+			var buf = '<span class="statrow statrow-head"><label></label> <span class="statgraph"></span> <em>' + (usesStatPoints ? 'SPs' : supportsEVs ? 'EV' : 'AV') + '</em></span>';
 			var defaultEV = (this.curTeam.gen > 2 ? 0 : 252);
 			for (var stat in stats) {
 				if (stat === 'spd' && this.curTeam.gen === 1) continue;
@@ -2458,7 +2480,7 @@
 			if (this.curTeam.gen > 2 && (usesStatPoints || supportsEVs)) buf += '<div><em>Remaining:</em></div>';
 			buf += '</div>';
 
-			buf += '<div class="col evcol"><div><strong>' + (supportsEVs ? 'EVs' : usesStatPoints ? 'Points' : 'AVs') + '</strong></div>';
+			buf += '<div class="col evcol"><div><strong>' + (supportsEVs ? 'EVs' : usesStatPoints ? 'SPs' : 'AVs') + '</strong></div>';
 			var totalev = 0;
 			this.plus = '';
 			this.minus = '';
@@ -3565,6 +3587,10 @@
 			// only available through an event with 31 Spe IVs
 			if (set.species.startsWith('Terapagos')) minSpe = false;
 
+			if (usesChampionsStatPoints(this.curTeam.format)) {
+				normalizeChampionsStatPointIVs(set);
+				return;
+			}
 			if (this.curTeam.format.includes('1v1') || this.curTeam.format.includes('categoryswap') ||
 				this.curTeam.format.includes('partnersincrime') || this.curTeam.format.includes('typesplit') ||
 				this.curTeam.format.includes('champions') || this.curTeam.format.includes('champs')) return;
@@ -3656,7 +3682,10 @@
 				if (baseFormat.substr(-5) === 'draft') baseFormat = baseFormat.substr(0, baseFormat.length - 5);
 				if (!baseFormat) baseFormat = 'ou';
 				if (this.curTeam && this.curTeam.format) {
-					if (fullFormat.includes('natdexchampionsmodern') || fullFormat.includes('natdexchampsmodern')) set.level = 50;
+					if (
+						fullFormat.includes('natdexchampionslegends') || fullFormat.includes('natdexchampslegends') ||
+						fullFormat.includes('natdexchampionsmodern') || fullFormat.includes('natdexchampsmodern')
+					) set.level = 50;
 					else if (
 						(!isNatDexChampionsClassicFormat(fullFormat) &&
 						baseFormat.substr(0, 9) === 'champions') || baseFormat.substr(0, 10) === 'battlespot' ||
@@ -3707,6 +3736,7 @@
 			if (!set) set = this.curSet;
 			if (!set) return 0;
 
+			if (usesStatPoints) normalizeChampionsStatPointIVs(set);
 			if (!set.ivs) set.ivs = {
 				hp: 31,
 				atk: 31,

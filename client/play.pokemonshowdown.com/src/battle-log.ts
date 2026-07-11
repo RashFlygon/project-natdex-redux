@@ -31,9 +31,12 @@ declare function formatText(input: string, isTrusted?: boolean): string;
 export { MD5, formatText };
 
 export class BattleLog {
+	static readonly championsRankRoomid = 'overused';
+	static championsRanksLoaded = false;
 	elem: HTMLDivElement;
 	innerElem: HTMLDivElement;
 	scene: BattleScene | null = null;
+	roomid = '';
 	preemptElem: HTMLDivElement = null!;
 	atBottom = true;
 	skippedLines = false;
@@ -1199,6 +1202,44 @@ export class BattleLog {
 		return this.colorCache[name];
 	}
 
+	static loadChampionsRanks() {
+		if (this.championsRanksLoaded) return;
+		this.championsRanksLoaded = true;
+		(window as any).ChampionsRanks ||= {};
+		try {
+			const stored = window.localStorage?.getItem('ChampionsRanks');
+			if (stored) Object.assign((window as any).ChampionsRanks, JSON.parse(stored));
+		} catch {}
+	}
+
+	static saveChampionsRanks() {
+		try {
+			window.localStorage?.setItem('ChampionsRanks', JSON.stringify((window as any).ChampionsRanks || {}));
+		} catch {}
+	}
+
+	static setChampionsRank(userid: ID, rank: {id: string, name: string, placement?: string, elo?: string}) {
+		if (!userid || !rank.id || !rank.name) return;
+		this.loadChampionsRanks();
+		const nextRank = {...(window as any).ChampionsRanks[userid], ...rank};
+		(window as any).ChampionsRanks[userid] = nextRank;
+		this.saveChampionsRanks();
+		try {
+			window.dispatchEvent(new CustomEvent('championsrankchange', {
+				detail: {userid, rank: nextRank},
+			}));
+		} catch {}
+	}
+
+	static rankIconHTML(userid: ID, roomid?: string) {
+		if (roomid !== BattleLog.championsRankRoomid) return '';
+		this.loadChampionsRanks();
+		const rank = (window as any).ChampionsRanks?.[userid];
+		if (!rank?.id || !rank?.name) return '';
+		const title = BattleLog.escapeHTML(rank.name);
+		return ` <span class="rankicon rankicon-${BattleLog.escapeHTML(rank.id)}" title="${title}" aria-label="${title}"></span>`;
+	}
+
 	static HSLToRGB(H: number, S: number, L: number) {
 		let C = (100 - Math.abs(2 * L - 100)) * S / 100 / 100;
 		let X = C * (1 - Math.abs((H / 60) % 2 - 1));
@@ -1240,8 +1281,9 @@ export class BattleLog {
 			group = name.charAt(0);
 			name = name.slice(1);
 		}
-		const colorStyle = ` style="color:${BattleLog.usernameColor(toID(name))}"`;
-		const clickableName = `<span class="username"><small class="groupsymbol">${BattleLog.escapeHTML(group)}</small>${BattleLog.escapeHTML(name)}</span>`;
+		const userid = toID(name);
+		const colorStyle = ` style="color:${BattleLog.usernameColor(userid)}"`;
+		const clickableName = `<span class="username"><small class="groupsymbol">${BattleLog.escapeHTML(group)}</small>${BattleLog.escapeHTML(name)}${BattleLog.rankIconHTML(userid, this.roomid)}</span>`;
 		const isMine = (window.app?.user?.get('name') === name) || (window.PS?.user.name === name);
 		const hlClass = isHighlighted ? ' highlighted' : '';
 		const mineClass = isMine ? ' mine' : '';
@@ -1265,12 +1307,12 @@ export class BattleLog {
 			if (cmd === 'mee') parsedMessage = parsedMessage.slice(1);
 			if (!showMe) {
 				return [
-					'chat chatmessage-' + toID(name) + hlClass + mineClass,
+					'chat chatmessage-' + userid + hlClass + mineClass,
 					`${timestamp}<strong${colorStyle}>${clickableName}:</strong> <em>/me${parsedMessage}</em>`,
 				];
 			}
 			return [
-				'chat chatmessage-' + toID(name) + hlClass + mineClass,
+				'chat chatmessage-' + userid + hlClass + mineClass,
 				`${timestamp}<em><i><strong${colorStyle}>&bull; ${clickableName}</strong>${parsedMessage}</i></em>`,
 			];
 		case 'invite':

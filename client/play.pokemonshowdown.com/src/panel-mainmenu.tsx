@@ -35,6 +35,12 @@ export class MainMenuRoom extends PSRoom {
 			group?: string,
 			customgroup?: string,
 			rooms?: { [roomid: string]: { isPrivate?: true, p1?: string, p2?: string } },
+			championsProfile?: {
+				formatid: string,
+				rank: {id: string, name: string, placement: number, elo: number},
+				record: {wins: number, losses: number, ties: number},
+				season: {id: string, name: string, bestPlacement?: number, peakElo?: number},
+			},
 		},
 	} = {};
 	roomsCache: {
@@ -250,6 +256,7 @@ export class MainMenuRoom extends PSRoom {
 				let partner = false;
 				let bestOfDefault = false;
 				let teraPreviewDefault = false;
+				let terastalClauseOption = false;
 				let team: 'preset' | null = null;
 				let teambuilderLevel: number | null = null;
 				let lastCommaIndex = name.lastIndexOf(',');
@@ -264,6 +271,7 @@ export class MainMenuRoom extends PSRoom {
 					if (code & 32) partner = true;
 					if (code & 64) bestOfDefault = true;
 					if (code & 128) teraPreviewDefault = true;
+					if (code & 512) terastalClauseOption = true;
 				} else {
 					// Backwards compatibility: late 0.9.0 -> 0.10.0
 					if (name.substr(name.length - 2) === ',#') { // preset teams
@@ -279,7 +287,7 @@ export class MainMenuRoom extends PSRoom {
 					}
 				}
 				let id = toID(name);
-				let isTeambuilderFormat = !team && !name.endsWith('Custom Game');
+				let isTeambuilderFormat = !team && (!name.endsWith('Custom Game') || id === 'gen9natdexchampionscustomgame');
 				let teambuilderFormat = '' as ID;
 				let teambuilderFormatName = '';
 				if (isTeambuilderFormat) {
@@ -327,6 +335,7 @@ export class MainMenuRoom extends PSRoom {
 					tournamentShow,
 					bestOfDefault,
 					teraPreviewDefault,
+					terastalClauseOption,
 					rated: searchShow && id.substr(4, 7) !== 'unrated',
 					teambuilderLevel,
 					partner,
@@ -738,42 +747,106 @@ export class FormatDropdown extends preact.Component<{
 }> {
 	declare base?: HTMLButtonElement;
 	format = '';
+	championsDetailsRequested = '';
+	championsDetailsInterval: number | null = null;
+	componentDidMount() {
+		window.addEventListener('championsrankchange', this.handleChampionsRankChange);
+		this.championsDetailsInterval = window.setInterval(this.maybeRefreshChampionsDetails, 5000);
+		this.requestChampionsDetails();
+	}
+	componentWillUnmount() {
+		window.removeEventListener('championsrankchange', this.handleChampionsRankChange);
+		if (this.championsDetailsInterval) window.clearInterval(this.championsDetailsInterval);
+	}
+	componentDidUpdate() {
+		this.requestChampionsDetails();
+	}
+	requestChampionsDetails(force = false) {
+		if (!PS.user.userid || (!force && this.championsDetailsRequested === PS.user.userid)) return;
+		this.championsDetailsRequested = PS.user.userid;
+		void PS.mainmenu.query('userdetails' as ID, PS.user.userid).then(() => this.forceUpdate());
+	}
+	handleChampionsRankChange = (event: Event) => {
+		const detail = (event as CustomEvent).detail;
+		if (!PS.user.userid || detail?.userid !== PS.user.userid) return;
+		this.championsDetailsRequested = '';
+		this.forceUpdate();
+		this.requestChampionsDetails(true);
+	};
+	maybeRefreshChampionsDetails = () => {
+		const format = toID(this.props.format || this.format || this.props.defaultFormat || '');
+		if (format !== 'gen9natdexchampionsou') return;
+		this.requestChampionsDetails(true);
+	};
 	change = (e: Event) => {
 		if (!this.base) return;
 		this.format = this.base.value;
 		this.forceUpdate();
 		if (this.props.onChange) this.props.onChange(e);
 	};
+	renderChampionsRank(formatid: ID) {
+		if (formatid !== 'gen9natdexchampionsou') return null;
+		const detailsRank = PS.user.userid ?
+			(PS.mainmenu.userdetailsCache[PS.user.userid] as any)?.championsProfile?.rank :
+			null;
+		let rank = detailsRank ? {
+			id: detailsRank.id,
+			name: detailsRank.name,
+			elo: detailsRank.elo,
+		} : null;
+		if (!rank && PS.user.userid) {
+			try {
+				const storedRanks = JSON.parse(window.localStorage?.getItem('ChampionsRanks') || '{}');
+				const storedRank = storedRanks?.[PS.user.userid];
+				if (storedRank?.id && storedRank?.name) rank = storedRank;
+			} catch {}
+		}
+		if (!rank?.id || !rank?.name) rank = {id: 'unranked', name: 'Unranked', elo: 1000};
+		const elo = rank.elo ? `${rank.elo} Elo` : '';
+		return <div class="champions-format-rank">
+			{rank.id !== 'unranked' && <span class={`rankicon rankicon-${rank.id}`}></span>}
+			<strong>{rank.name}</strong>{elo && ` - ${elo}`}
+		</div>;
+	}
 	render() {
 		this.format = this.props.format || this.format || this.props.defaultFormat || '';
-		let [formatName, customRules] = this.format.split('@@@');
+		const [rawFormatName, customRules] = this.format.split('@@@');
+		const formatid = toID(rawFormatName);
+		let formatName = rawFormatName;
 		if (window.BattleLog) formatName = BattleLog.formatName(formatName);
 		if (this.props.format && !this.props.onChange) {
 			// There's intentionally no `disabled` prop. If this is out of sync
 			// with the `format` and `onChange` props, that's a bug.
 			return <button
-				name="format" value={this.format} class="select formatselect preselected" disabled
+				name="format" value={this.format}
+				class="select formatselect preselected"
+				disabled
 			>
 				{formatName}
 				{!!customRules && [<br />, <small>Custom rules: {customRules}</small>]}
 			</button>;
 		}
-		return <button
-			name="format" value={this.format} data-selecttype={this.props.selectType}
-			class="select formatselect" data-href="/formatdropdown" onChange={this.change}
-		>
-			{formatName || (!!this.props.placeholder && <em>{this.props.placeholder}</em>) || null}
-			{!!customRules && [<br />, <small>Custom rules: {customRules}</small>]}
-		</button>;
+		return <>
+			<button
+				name="format" value={this.format} data-selecttype={this.props.selectType}
+				class="select formatselect"
+				data-href="/formatdropdown" onChange={this.change}
+			>
+				{formatName || (!!this.props.placeholder && <em>{this.props.placeholder}</em>) || null}
+				{!!customRules && [<br />, <small>Custom rules: {customRules}</small>]}
+			</button>
+			{this.renderChampionsRank(formatid)}
+		</>;
 	}
 }
 
-class TeamDropdown extends preact.Component<{ format: string }> {
+class TeamDropdown extends preact.Component<{ format: string, teamKey?: string, onChange?: JSX.EventHandler<Event> }> {
 	teamFormat = '';
 	teamKey = '';
-	change = () => {
+	change = (ev: Event) => {
 		if (!this.base) return;
 		this.teamKey = (this.base as HTMLButtonElement).value;
+		if (this.props.onChange) this.props.onChange(ev);
 		this.forceUpdate();
 	};
 	getDefaultTeam(teambuilderFormat: string) {
@@ -802,7 +875,13 @@ class TeamDropdown extends preact.Component<{ format: string }> {
 		}
 		if (teamFormat !== this.teamFormat) {
 			this.teamFormat = teamFormat;
-			this.teamKey = this.getDefaultTeam(teamFormat);
+			this.teamKey = this.props.teamKey || this.getDefaultTeam(teamFormat);
+		}
+		if (this.props.teamKey !== undefined && this.props.teamKey !== this.teamKey) {
+			this.teamKey = this.props.teamKey || this.getDefaultTeam(teamFormat);
+		}
+		if (this.base?.value && this.base.value !== this.teamKey) {
+			this.teamKey = this.base.value;
 		}
 		const team = PS.teams.byKey[this.teamKey] || null;
 		return <button
@@ -822,10 +901,18 @@ export class TeamForm extends preact.Component<{
 	onValidate?: ((e: Event, format: string, team?: Team) => void) | null,
 }> {
 	format = '';
+	teamKey = '';
+	teamFormat = '';
 	teraPreview = false;
+	terastalClause = false;
 	bestOf = false;
 	changeFormat = (ev: Event) => {
 		this.format = (ev.target as HTMLButtonElement).value;
+		this.teamKey = '';
+		this.teamFormat = '';
+	};
+	changeTeam = (ev: Event) => {
+		this.teamKey = (ev.target as HTMLButtonElement).value;
 	};
 	submit = (ev: Event, validate?: 'validate') => {
 		ev.preventDefault();
@@ -845,6 +932,10 @@ export class TeamForm extends preact.Component<{
 			const hasCustomRules = format.includes('@@@');
 			format = `${format}${hasCustomRules ? ', Tera Type Preview' : '@@@ Tera Type Preview'}`;
 		}
+		if (this.terastalClause) {
+			const hasCustomRules = format.includes('@@@');
+			format = `${format}${hasCustomRules ? ', Terastal Clause' : '@@@ Terastal Clause'}`;
+		}
 		if (this.bestOf) {
 			const hasCustomRules = format.includes('@@@');
 			const value = this.base?.querySelector<HTMLInputElement>('input[name=bestofvalue]')?.value;
@@ -858,6 +949,7 @@ export class TeamForm extends preact.Component<{
 		const checked = (ev.target as HTMLInputElement)?.checked;
 		const rule = (ev.target as HTMLInputElement)?.name;
 		if (rule === 'terapreview') this.teraPreview = checked;
+		if (rule === 'terastalclause') this.terastalClause = checked;
 		if (rule === 'bestof') this.bestOf = checked;
 	};
 	handleClick = (ev: Event) => {
@@ -897,6 +989,12 @@ export class TeamForm extends preact.Component<{
 			this.format = this.props.defaultFormat.slice(2);
 		}
 		if (this.props.format) this.format = this.props.format;
+		const teamFormat = this.props.teamFormat || this.format;
+		const teambuilderFormat = PS.teams.teambuilderFormat(teamFormat);
+		if (teambuilderFormat !== this.teamFormat) {
+			this.teamFormat = teambuilderFormat;
+			this.teamKey = '';
+		}
 		return <form class={this.props.class} onSubmit={this.submit} onClick={this.handleClick}>
 			{!this.props.hideFormat && <p>
 				<label class="label">
@@ -910,7 +1008,7 @@ export class TeamForm extends preact.Component<{
 			<p>
 				<label class="label">
 					Team:<br />
-					<TeamDropdown format={this.props.teamFormat || this.format} />
+					<TeamDropdown format={teamFormat} teamKey={this.teamKey} onChange={this.changeTeam} />
 				</label>
 			</p>
 			{this.props.selectType === 'challenge' &&
@@ -918,6 +1016,11 @@ export class TeamForm extends preact.Component<{
 				<label class="checkbox">
 					<input type="checkbox" name="terapreview" onChange={this.toggleCustomRule} />
 					<abbr title="Start a battle with Tera Type Preview">Tera Type Preview</abbr></label></p>}
+			{this.props.selectType === 'challenge' &&
+				window.BattleFormats[formatId]?.terastalClauseOption && <p>
+				<label class="checkbox">
+					<input type="checkbox" name="terastalclause" onChange={this.toggleCustomRule} />
+					<abbr title="Start a battle where Terastallization is banned">Terastal Clause</abbr></label></p>}
 			{this.props.selectType === 'challenge' &&
 				window.BattleFormats[formatId]?.bestOfDefault && <p>
 				<label class="checkbox"><input type="checkbox" name="bestof" onChange={this.toggleCustomRule} />

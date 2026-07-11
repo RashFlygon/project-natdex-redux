@@ -87,12 +87,23 @@ export function toUserid(text: any) {
 }
 
 const isNatDexChampionsModernFormat = (formatid: string) => (
+	formatid.includes('natdexchampionslegends') || formatid.includes('natdexchampslegends') ||
 	formatid.includes('natdexchampionsmodern') || formatid.includes('natdexchampsmodern')
+);
+
+const isNatDexChampionsModernMAFormat = (formatid: string) => (
+	formatid.includes('natdexchampionsmodernma') || formatid.includes('natdexchampsmodernma') ||
+	formatid === 'ndcmoderndraftma' || formatid === 'ndcmoderndoublesdraftma'
+);
+
+const isNatDexChampionsClassicMAFormat = (formatid: string) => (
+	formatid.includes('natdexchampionsclassicma') || formatid.includes('natdexchampsclassicma') ||
+	formatid === 'ndcdraftma' || formatid === 'ndcdoublesdraftma'
 );
 
 const isNatDexChampionsClassicFormat = (formatid: string) => (
 	(formatid.includes('natdexchampions') || formatid.includes('natdexchamps')) &&
-	!isNatDexChampionsModernFormat(formatid)
+	!isNatDexChampionsModernFormat(formatid) && !isNatDexChampionsClassicMAFormat(formatid)
 );
 
 type Comparable = number | string | boolean | Comparable[] | { reverse: Comparable };
@@ -290,13 +301,16 @@ export const Dex = new class implements ModdedDex {
 		if (dex.gen === 8 && formatid.includes('bdsp')) {
 			dex = Dex.mod('gen8bdsp' as ID);
 		}
-		if (dex.gen === 9 && formatid.includes('legends')) {
-			dex = Dex.mod('gen9legendsou' as ID);
-		}
-		if (dex.gen === 9 && isNatDexChampionsModernFormat(formatid)) {
+		if (dex.gen === 9 && isNatDexChampionsModernMAFormat(formatid)) {
+			dex = Dex.mod('gen9natdexchampsmodernma' as ID);
+		} else if (dex.gen === 9 && isNatDexChampionsClassicMAFormat(formatid)) {
+			dex = Dex.mod('gen9natdexchampsclassicma' as ID);
+		} else if (dex.gen === 9 && isNatDexChampionsModernFormat(formatid)) {
 			dex = Dex.mod('gen9natdexchampsmodern' as ID);
 		} else if (dex.gen === 9 && isNatDexChampionsClassicFormat(formatid)) {
 			dex = Dex.mod('gen9natdexchampsclassic' as ID);
+		} else if (dex.gen === 9 && formatid.includes('legends')) {
+			dex = Dex.mod('gen9legendsou' as ID);
 		} else if (dex.gen === 9 && formatid.includes('champions')) {
 			dex = Dex.mod('champions' as ID);
 		}

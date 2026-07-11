@@ -1548,6 +1548,9 @@ export class Pokemon {
 
 		this.lastDamage = 0;
 		this.attackedBy = [];
+		if (!['championsma', 'gen9natdexchampsclassicma', 'gen9natdexchampsmodernma'].includes(this.battle.dex.currentMod)) {
+			this.timesAttacked = 0;
+		}
 		this.hurtThisTurn = null;
 		this.newlySwitched = true;
 		this.beingCalledBack = false;
@@ -2153,7 +2156,7 @@ export class Pokemon {
 		if (item === 'ironball') return true;
 		// If a Fire/Flying type uses Burn Up and Roost, it becomes ???/Flying-type, but it's still grounded.
 		if (!negateImmunity && this.hasType('Flying') && !(this.hasType('???') && 'roost' in this.volatiles)) return false;
-		if (this.hasAbility('levitate') && !this.battle.suppressingAbility(this)) return null;
+		if (this.hasAbility(['levitate', 'eelevate']) && !this.battle.suppressingAbility(this)) return null;
 		if ('magnetrise' in this.volatiles) return false;
 		if ('telekinesis' in this.volatiles) return false;
 		return item !== 'airballoon';

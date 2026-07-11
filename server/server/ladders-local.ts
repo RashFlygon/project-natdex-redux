@@ -23,8 +23,366 @@ import { FS, Utils } from '../lib';
 type LadderRow = [string, number, string, number, number, number, string];
 /** formatid: ladder */
 type LadderCache = Map<string, LadderRow[] | Promise<LadderRow[]>>;
+type ChampionsSeasonSnapshotRow = {
+	userid: string,
+	username: string,
+	placement: number,
+	rank: LadderRank,
+	elo: number,
+	wins: number,
+	losses: number,
+	ties: number,
+};
+type ChampionsSeasonSnapshot = {
+	id: string,
+	name: string,
+	timestamp: number,
+	rows: ChampionsSeasonSnapshotRow[],
+};
+type ChampionsSeason = {
+	id: string,
+	name: string,
+	startedAt: number,
+	endedAt?: number,
+	snapshots: ChampionsSeasonSnapshot[],
+};
+type ChampionsSeasonData = {
+	current: {id: string, name: string, startedAt: number, lastDecayAt?: number},
+	seasons: {[id: string]: ChampionsSeason},
+};
+export type LadderRank = {
+	id: 'champion' | 'masterball' | 'ultraball' | 'greatball' | 'pokeball' | 'unranked',
+	name: string,
+	placement: number,
+	percentile: number,
+};
 
 const ladderCaches: LadderCache = new Map();
+export const CHAMPIONS_RANK_FORMAT = 'gen9natdexchampionsou';
+const CHAMPIONS_SEASONS_PATH = 'config/champions/seasons.json';
+const CHAMPIONS_RANK_THRESHOLDS = {
+	champion: 1350,
+	masterball: 1250,
+	ultraball: 1200,
+	greatball: 1100,
+	pokeball: 1001,
+};
+const CHAMPIONS_MAX_CHAMPIONS = 15;
+const CHAMPIONS_DECAY_AFTER_DAYS = 2;
+const CHAMPIONS_DECAY_ELO_PER_DAY = 10;
+const CHAMPIONS_DECAY_MIN_ELO = CHAMPIONS_RANK_THRESHOLDS.masterball;
+const CHAMPIONS_DECAY_CHECK_INTERVAL = 60 * 60 * 1000;
+const DAY = 24 * 60 * 60 * 1000;
+
+export function clearLocalLadderCache(formatid?: string) {
+	if (formatid) {
+		ladderCaches.delete(formatid);
+		return;
+	}
+	ladderCaches.clear();
+}
+
+export function getLadderRankFromPlacement(placement: number, total: number, elo = 1000): LadderRank | null {
+	if (!placement || !total) return null;
+	const percentile = placement / total;
+	if (placement <= CHAMPIONS_MAX_CHAMPIONS && elo >= CHAMPIONS_RANK_THRESHOLDS.champion) {
+		return {id: 'champion', name: 'Champion', placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.masterball) {
+		return {id: 'masterball', name: `Master Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.masterball, CHAMPIONS_RANK_THRESHOLDS.champion)}`, placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.ultraball) {
+		return {id: 'ultraball', name: `Ultra Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.ultraball, CHAMPIONS_RANK_THRESHOLDS.masterball)}`, placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.greatball) {
+		return {id: 'greatball', name: `Great Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.greatball, CHAMPIONS_RANK_THRESHOLDS.ultraball)}`, placement, percentile};
+	}
+	if (elo >= CHAMPIONS_RANK_THRESHOLDS.pokeball) {
+		return {id: 'pokeball', name: `Poke Ball ${rankDivisionByElo(elo, CHAMPIONS_RANK_THRESHOLDS.pokeball, CHAMPIONS_RANK_THRESHOLDS.greatball)}`, placement, percentile};
+	}
+	return defaultRank(placement);
+}
+
+function rankDivisionByElo(elo: number, min: number, max: number) {
+	const step = (max - min) / 3;
+	if (elo >= max - step) return 'I';
+	if (elo >= max - step * 2) return 'II';
+	return 'III';
+}
+
+function defaultRank(placement = 0): LadderRank {
+	return {id: 'pokeball', name: 'Poke Ball III', placement, percentile: 1};
+}
+
+function unrankedRank(): LadderRank {
+	return {id: 'unranked', name: 'Unranked', placement: 0, percentile: 1};
+}
+
+function rankPayload(rank: LadderRank | null, elo = 0) {
+	if (!rank) return '';
+	return `${rank.id},${rank.name},${rank.placement},${Math.round(elo)}`;
+}
+
+function addChampionsRankProtocol(room: AnyObject, username: string, rank: LadderRank | null, elo: number) {
+	if (!room.battle || !rank) return;
+	const userid = toID(username);
+	const player = room.battle.players?.find((curPlayer: AnyObject) => curPlayer.id === userid || toID(curPlayer.name) === userid);
+	if (!player?.slot) return;
+	room.add(`|championsrank|${player.slot}|${rank.id}|${rank.name}|${Math.round(elo)}|${rank.placement || ''}`);
+}
+
+function rankIconHTML(rank: LadderRank | null) {
+	if (!rank) return '';
+	const title = Utils.escapeHTML(rank.name);
+	const item = {
+		champion: "King's Rock",
+		masterball: 'Master Ball',
+		ultraball: 'Ultra Ball',
+		greatball: 'Great Ball',
+		pokeball: 'Poke Ball',
+		unranked: '',
+	}[rank.id];
+	if (!item) return '';
+	return `<psicon item="${Utils.escapeHTML(item)}" class="rankicon rankicon-${rank.id}" title="${title}" aria-label="${title}"></psicon>`;
+}
+
+function rankIconSpanHTML(rank: LadderRank | null) {
+	if (!rank) return '';
+	const title = Utils.escapeHTML(rank.name);
+	return `<span class="rankicon rankicon-${rank.id}" title="${title}" aria-label="${title}"></span>`;
+}
+
+function rankNameWithIconHTML(rank: LadderRank | null) {
+	if (!rank) return 'Unranked';
+	const rankNameParts = rank.name.split(' ');
+	const division = rank.id === 'champion' ? '' : rankNameParts[rankNameParts.length - 1];
+	return `${rankIconSpanHTML(rank)}${division ? ` ${Utils.escapeHTML(division)}` : ''}`;
+}
+
+function estimatedGXE(elo: number) {
+	return Math.max(1, Math.min(99.9, 50 + (elo - 1000) / 18));
+}
+
+function estimatedGlicko(elo: number, games: number) {
+	const rating = Math.round(elo + 170);
+	const deviation = Math.max(25, Math.round(85 - Math.min(games, 80) * 0.75));
+	return {rating, deviation};
+}
+
+function nextRankTarget(rank: LadderRank | null, total: number) {
+	if (!rank || rank.id === 'champion' || !total) return null;
+	const boundaries = [
+		{name: 'Champion', elo: CHAMPIONS_RANK_THRESHOLDS.champion},
+		{name: 'Master Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.champion - (CHAMPIONS_RANK_THRESHOLDS.champion - CHAMPIONS_RANK_THRESHOLDS.masterball) / 3)},
+		{name: 'Master Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.champion - (CHAMPIONS_RANK_THRESHOLDS.champion - CHAMPIONS_RANK_THRESHOLDS.masterball) * 2 / 3)},
+		{name: 'Master Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.masterball},
+		{name: 'Ultra Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.masterball - (CHAMPIONS_RANK_THRESHOLDS.masterball - CHAMPIONS_RANK_THRESHOLDS.ultraball) / 3)},
+		{name: 'Ultra Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.masterball - (CHAMPIONS_RANK_THRESHOLDS.masterball - CHAMPIONS_RANK_THRESHOLDS.ultraball) * 2 / 3)},
+		{name: 'Ultra Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.ultraball},
+		{name: 'Great Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.ultraball - (CHAMPIONS_RANK_THRESHOLDS.ultraball - CHAMPIONS_RANK_THRESHOLDS.greatball) / 3)},
+		{name: 'Great Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.ultraball - (CHAMPIONS_RANK_THRESHOLDS.ultraball - CHAMPIONS_RANK_THRESHOLDS.greatball) * 2 / 3)},
+		{name: 'Great Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.greatball},
+		{name: 'Poke Ball I', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.greatball - (CHAMPIONS_RANK_THRESHOLDS.greatball - CHAMPIONS_RANK_THRESHOLDS.pokeball) / 3)},
+		{name: 'Poke Ball II', elo: Math.ceil(CHAMPIONS_RANK_THRESHOLDS.greatball - (CHAMPIONS_RANK_THRESHOLDS.greatball - CHAMPIONS_RANK_THRESHOLDS.pokeball) * 2 / 3)},
+		{name: 'Poke Ball III', elo: CHAMPIONS_RANK_THRESHOLDS.pokeball},
+	];
+	const index = boundaries.findIndex(boundary => boundary.name === rank.name);
+	if (index <= 0) return null;
+	const target = boundaries[index - 1];
+	return {name: target.name, elo: target.elo};
+}
+
+function nextRankDistance(ladder: LadderRow[], index: number, rank: LadderRank | null) {
+	if (!rank || index < 0) return '';
+	const rankedRows = ladder.filter(row => row[1] > 1000);
+	const target = nextRankTarget(rank, rankedRows.length);
+	if (!target) return `Already at the top rank.`;
+	const row = ladder[index];
+	if (target.name === 'Champion' && rank.id === 'masterball') {
+		const placement = rankedRows.findIndex(curRow => curRow[0] === row[0]) + 1;
+		if (placement > CHAMPIONS_MAX_CHAMPIONS) return `Reach top ${CHAMPIONS_MAX_CHAMPIONS} and ${target.elo} Elo for Champion.`;
+	}
+	const eloNeeded = Math.max(1, Math.ceil(target.elo - row[1]));
+	return `~${eloNeeded} Elo from ${target.name}.`;
+}
+
+function championsRankDeltaHTML(name: string, oldElo: number, newElo: number, oldRank: LadderRank | null, newRank: LadderRank | null, ladder: LadderRow[], index: number) {
+	const eloDelta = Math.round(newElo) - Math.round(oldElo);
+	const signedDelta = `${eloDelta >= 0 ? '+' : ''}${eloDelta} Elo`;
+	const deltaClass = eloDelta > 0 ? 'good' : eloDelta < 0 ? 'bad' : 'neutral';
+	const oldName = oldRank?.name || 'Unranked';
+	const newName = newRank?.name || 'Unranked';
+	const transition = oldName === newName ?
+		`<strong class="champions-rank-title">${rankNameWithIconHTML(newRank)}</strong>` :
+		`${rankNameWithIconHTML(oldRank)} &rarr; <strong class="champions-rank-title">${rankNameWithIconHTML(newRank)}</strong>`;
+	const progress = nextRankDistance(ladder, index, newRank);
+	return `<div class="champions-rank-adjustment">` +
+		`${Utils.escapeHTML(name)}'s Champions rank: ${transition} ` +
+		`<small class="${deltaClass}">(${Utils.escapeHTML(signedDelta)})</small>` +
+		(progress ? `<br /><small>${Utils.escapeHTML(progress)}</small>` : '') +
+		`</div>`;
+}
+
+function defaultChampionsSeasonData(): ChampionsSeasonData {
+	const startedAt = Date.now();
+	return {
+		current: {id: 'season-1', name: 'Season 1', startedAt},
+		seasons: {
+			'season-1': {id: 'season-1', name: 'Season 1', startedAt, snapshots: []},
+		},
+	};
+}
+
+export function loadChampionsSeasons(): ChampionsSeasonData {
+	try {
+		const data = JSON.parse(FS(CHAMPIONS_SEASONS_PATH).readIfExistsSync() || 'null');
+		if (data?.current?.id && data.seasons?.[data.current.id]) return data;
+	} catch {}
+	return defaultChampionsSeasonData();
+}
+
+function saveChampionsSeasons(data: ChampionsSeasonData) {
+	FS(CHAMPIONS_SEASONS_PATH).writeUpdate(() => JSON.stringify(data, null, 2));
+}
+
+function parseLadderDate(date: string) {
+	if (!date) return 0;
+	const timestamp = Date.parse(date.replace(/\s*\(decayed after \d+d inactive\)$/, ''));
+	return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function applyChampionsDecay(formatid: string, ladder: LadderRow[]) {
+	if (formatid !== CHAMPIONS_RANK_FORMAT) return false;
+	const data = loadChampionsSeasons();
+	const now = Date.now();
+	if (data.current.lastDecayAt && now - data.current.lastDecayAt < CHAMPIONS_DECAY_CHECK_INTERVAL) return false;
+
+	let changed = false;
+	for (const row of ladder) {
+		if (row[1] <= CHAMPIONS_DECAY_MIN_ELO || row[3] + row[4] + row[5] <= 0) continue;
+		const lastPlayed = parseLadderDate(row[6]);
+		if (!lastPlayed) continue;
+		const inactiveDays = Math.floor((now - lastPlayed) / DAY);
+		if (inactiveDays <= CHAMPIONS_DECAY_AFTER_DAYS) continue;
+		const decay = (inactiveDays - CHAMPIONS_DECAY_AFTER_DAYS) * CHAMPIONS_DECAY_ELO_PER_DAY;
+		const nextElo = Math.max(CHAMPIONS_DECAY_MIN_ELO, row[1] - decay);
+		if (nextElo >= row[1]) continue;
+		row[1] = nextElo;
+		row[6] = `${new Date()} (decayed after ${inactiveDays}d inactive)`;
+		changed = true;
+	}
+
+	data.current.lastDecayAt = now;
+	saveChampionsSeasons(data);
+	if (changed) ladder.sort((a, b) => b[1] - a[1] || a[2].localeCompare(b[2]));
+	return changed;
+}
+
+function getRowRank(row: LadderRow, placement: number, total: number): LadderRank {
+	if (row[1] <= 1000) return defaultRank(placement);
+	return getLadderRankFromPlacement(placement, total, row[1]) || defaultRank(placement);
+}
+
+function championsRows(ladder: LadderRow[], limit = Infinity): ChampionsSeasonSnapshotRow[] {
+	const rankedRows = ladder.filter(row => row[1] > 1000);
+	const placementByUserid = new Map<string, number>();
+	for (const [i, row] of rankedRows.entries()) placementByUserid.set(row[0], i + 1);
+	const rows: ChampionsSeasonSnapshotRow[] = [];
+	for (const row of rankedRows) {
+		if (rows.length >= limit) break;
+		const placement = placementByUserid.get(row[0]) || rows.length + 1;
+		rows.push({
+			userid: row[0],
+			username: row[2],
+			placement,
+			rank: getRowRank(row, placement, rankedRows.length),
+			elo: Math.round(row[1]),
+			wins: row[3],
+			losses: row[4],
+			ties: row[5],
+		});
+	}
+	return rows;
+}
+
+export async function startChampionsSeason(name?: string) {
+	const data = loadChampionsSeasons();
+	const nextNumber = Object.keys(data.seasons).length + 1;
+	const id = `season-${nextNumber}`;
+	const startedAt = Date.now();
+	const seasonName = name?.trim() || `Season ${nextNumber}`;
+	const currentSeason = data.seasons[data.current.id];
+	if (currentSeason && !currentSeason.endedAt) currentSeason.endedAt = startedAt;
+	data.current = {id, name: seasonName, startedAt};
+	data.seasons[id] = {id, name: seasonName, startedAt, snapshots: []};
+	saveChampionsSeasons(data);
+	return data.seasons[id];
+}
+
+export async function snapshotChampionsSeason() {
+	const data = loadChampionsSeasons();
+	const season = data.seasons[data.current.id] || (
+		data.seasons[data.current.id] = {...data.current, snapshots: []}
+	);
+	const store = new LadderStore(CHAMPIONS_RANK_FORMAT);
+	const ladder = await store.getLadder();
+	const snapshot: ChampionsSeasonSnapshot = {
+		id: `${season.id}-snapshot-${season.snapshots.length + 1}`,
+		name: season.name,
+		timestamp: Date.now(),
+		rows: championsRows(ladder, 500),
+	};
+	season.snapshots.push(snapshot);
+	saveChampionsSeasons(data);
+	return snapshot;
+}
+
+export async function getChampionsProfile(userid: string) {
+	const store = new LadderStore(CHAMPIONS_RANK_FORMAT);
+	const ladder = await store.getLadder();
+	const index = store.indexOfUser(userid);
+	const data = loadChampionsSeasons();
+	const season = data.seasons[data.current.id] || {...data.current, snapshots: []};
+	if (index < 0) {
+		const rank = unrankedRank();
+		return {
+			formatid: CHAMPIONS_RANK_FORMAT,
+			rank: {id: rank.id, name: rank.name, placement: rank.placement, elo: 1000},
+			record: {wins: 0, losses: 0, ties: 0},
+			season: {id: season.id, name: season.name},
+		};
+	}
+	const row = ladder[index];
+	if (!row || row[3] + row[4] + row[5] <= 0) {
+		const rank = row?.[1] && row[1] > 1000 ? null : unrankedRank();
+		if (rank) {
+			return {
+				formatid: CHAMPIONS_RANK_FORMAT,
+				rank: {id: rank.id, name: rank.name, placement: rank.placement, elo: Math.round(row?.[1] || 1000)},
+				record: {wins: row?.[3] || 0, losses: row?.[4] || 0, ties: row?.[5] || 0},
+				season: {id: season.id, name: season.name},
+			};
+		}
+		return null;
+	}
+	const rankedRows = ladder.filter(curRow => curRow[1] > 1000);
+	const placement = row[1] > 1000 ? rankedRows.findIndex(curRow => curRow[0] === row[0]) + 1 : index + 1;
+	const rank = getRowRank(row, placement, rankedRows.length);
+	let bestPlacement: number | undefined;
+	let peakElo: number | undefined;
+	for (const snapshot of season.snapshots) {
+		const snapshotRow = snapshot.rows.find(curRow => curRow.userid === row[0]);
+		if (!snapshotRow) continue;
+		if (!bestPlacement || snapshotRow.placement < bestPlacement) bestPlacement = snapshotRow.placement;
+		if (!peakElo || snapshotRow.elo > peakElo) peakElo = snapshotRow.elo;
+	}
+	return {
+		formatid: CHAMPIONS_RANK_FORMAT,
+		rank: {id: rank.id, name: rank.name, placement: rank.placement, elo: Math.round(row[1])},
+		record: {wins: row[3], losses: row[4], ties: row[5]},
+		season: {id: season.id, name: season.name, bestPlacement, peakElo},
+	};
+}
 
 export class LadderStore {
 	formatid: string;
@@ -70,6 +428,7 @@ export class LadderStore {
 			}
 			// console.log('Ladders(' + this.formatid + ') loaded tsv: ' + JSON.stringify(this.ladder));
 			ladderCaches.set(this.formatid, (this.ladder = ladder));
+			if (applyChampionsDecay(this.formatid, ladder)) void this.save();
 			return this.ladder;
 		} catch {
 			// console.log('Ladders(' + this.formatid + ') err loading tsv: ' + JSON.stringify(this.ladder));
@@ -121,6 +480,30 @@ export class LadderStore {
 		return -1;
 	}
 
+	getRankAtIndex(index: number) {
+		if (!this.ladder || index < 0) return null;
+		if (this.ladder[index][1] <= 1000) return defaultRank(index + 1);
+		const rankedRows = this.ladder.filter(row => row[1] > 1000);
+		const placement = rankedRows.findIndex(row => row[0] === this.ladder![index][0]) + 1;
+		return getLadderRankFromPlacement(placement, rankedRows.length, this.ladder[index][1]);
+	}
+
+	async getRank(username: string, createIfNeeded = false) {
+		await this.getLadder();
+		const index = this.indexOfUser(username, createIfNeeded);
+		if (createIfNeeded) void this.save();
+		return this.getRankAtIndex(index) || defaultRank();
+	}
+
+	async getRankPayload(username: string, createIfNeeded = false) {
+		if (this.formatid !== CHAMPIONS_RANK_FORMAT) return '';
+		await this.getLadder();
+		const index = this.indexOfUser(username, createIfNeeded);
+		if (createIfNeeded) void this.save();
+		const row = index >= 0 ? this.ladder![index] : null;
+		return rankPayload(this.getRankAtIndex(index) || defaultRank(), row?.[1] || 1000);
+	}
+
 	/**
 	 * Returns [formatid, html], where html is an the HTML source of a
 	 * ladder toplist, to be displayed directly in the ladder tab of the
@@ -130,16 +513,64 @@ export class LadderStore {
 		const formatid = this.formatid;
 		const name = Dex.formats.get(formatid).name;
 		const ladder = await this.getLadder();
-		let buf = `<h3>${name} Top 100</h3>`;
+		if (applyChampionsDecay(formatid, ladder)) void this.save();
+		const showChampionsRank = formatid === CHAMPIONS_RANK_FORMAT;
+		if (showChampionsRank) return [formatid, this.getChampionsTopHTML(ladder, prefix)];
+		let buf = `<h3>${name} Top ${prefix ? 'Search' : '500'}</h3>`;
 		buf += `<table>`;
-		buf += `<tr><th>` + ['', 'Username', '<abbr title="Elo rating">Elo</abbr>', 'W', 'L', 'T'].join(`</th><th>`) + `</th></tr>`;
+		buf += `<tr><th>` + [
+			'', ...(showChampionsRank ? ['Rank'] : []), 'Username', '<abbr title="Elo rating">Elo</abbr>', 'W', 'L', 'T',
+		].join(`</th><th>`) + `</th></tr>`;
 		for (const [i, row] of ladder.entries()) {
+			if (!prefix && i >= 500) break;
 			if (prefix && !row[0].startsWith(prefix)) continue;
+			const rank = this.getRankAtIndex(i);
 			buf += `<tr><td>` + [
-				i + 1, row[2], `<strong>${Math.round(row[1])}</strong>`, row[3], row[4], row[5],
+				i + 1,
+				...(showChampionsRank ? [`${rankIconHTML(rank)} ${rank ? rank.name : ''}`] : []),
+				Utils.escapeHTML(row[2]),
+				`<strong>${Math.round(row[1])}</strong>`,
+				row[3], row[4], row[5],
 			].join(`</td><td>`) + `</td></tr>`;
 		}
 		return [formatid, buf];
+	}
+
+	getChampionsTopHTML(ladder: LadderRow[], prefix?: string) {
+		const season = loadChampionsSeasons().seasons[loadChampionsSeasons().current.id] || loadChampionsSeasons().seasons['season-1'];
+		const rows = championsRows(ladder);
+		let buf = `<div class="champions-ladder">`;
+		buf += `<h3>NatDex Champions OU Ladder</h3>`;
+		buf += `<div class="champions-ladder-summary">`;
+		buf += `<strong>${Utils.escapeHTML(season?.name || 'Season 1')}</strong>`;
+		buf += `</div>`;
+		if (prefix) {
+			buf += `<p><small>Showing users matching <strong>${Utils.escapeHTML(prefix)}</strong>.</small></p>`;
+		}
+		buf += `<table><tr><th>` + [
+			'Placement', 'Tier', 'Username', '<abbr title="Elo rating">Elo</abbr>',
+			'<abbr title="Estimated local GXE for prototype display">GXE</abbr>',
+			'<abbr title="Estimated local Glicko-1 rating for prototype display">Glicko-1</abbr>',
+		].join(`</th><th>`) + `</th></tr>`;
+		let shown = 0;
+		for (const row of rows) {
+			if (!prefix && shown >= 500) break;
+			if (prefix && !row.userid.startsWith(prefix)) continue;
+			const games = row.wins + row.losses + row.ties;
+			const glicko = estimatedGlicko(row.elo, games);
+			buf += `<tr><td>` + [
+				row.placement,
+				`${rankIconHTML(row.rank)} ${Utils.escapeHTML(row.rank.name)}`,
+				Utils.escapeHTML(row.username),
+				`<strong>${row.elo}</strong>`,
+				`${estimatedGXE(row.elo).toFixed(1)}%`,
+				`<em>${glicko.rating} <small>&plusmn; ${glicko.deviation}</small></em>`,
+			].join(`</td><td>`) + `</td></tr>`;
+			shown++;
+		}
+		if (!shown) buf += `<tr><td colspan="6"><em>No matching ranked users.</em></td></tr>`;
+		buf += `</table></div>`;
+		return buf;
 	}
 
 	/**
@@ -186,7 +617,9 @@ export class LadderStore {
 	 * Update the Elo rating for two players after a battle, and display
 	 * the results in the passed room.
 	 */
-	async updateRating(p1name: string, p2name: string, p1score: number, room: AnyObject) {
+	async updateRating(p1name: string, p2name: string, p1score: number, room: AnyObject, options: {
+		skipP1?: boolean, skipP2?: boolean, p1EloOverride?: number, p2EloOverride?: number,
+	} = {}) {
 		if (Ladders.disabled) {
 			room.addRaw(`Ratings not updated. The ladders are currently disabled.`).update();
 			return [p1score, null, null];
@@ -203,54 +636,64 @@ export class LadderStore {
 		let p1newElo;
 		let p2newElo;
 		try {
-			const p1index = this.indexOfUser(p1name, true);
-			const p1elo = ladder[p1index][1];
+			const p1index = options.skipP1 ? -1 : this.indexOfUser(p1name, true);
+			const p1elo = options.skipP1 ? (options.p1EloOverride || 1000) : ladder[p1index][1];
+			const p1oldRank = !options.skipP1 && formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p1index) : null;
 
-			let p2index = this.indexOfUser(p2name, true);
-			const p2elo = ladder[p2index][1];
+			let p2index = options.skipP2 ? -1 : this.indexOfUser(p2name, true);
+			const p2elo = options.skipP2 ? (options.p2EloOverride || 1000) : ladder[p2index][1];
+			const p2oldRank = !options.skipP2 && formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p2index) : null;
 
-			this.updateRow(ladder[p1index], p1score, p2elo);
-			this.updateRow(ladder[p2index], p2score, p1elo);
+			if (!options.skipP1) this.updateRow(ladder[p1index], p1score, p2elo);
+			if (!options.skipP2) this.updateRow(ladder[p2index], p2score, p1elo);
 
-			p1newElo = ladder[p1index][1];
-			p2newElo = ladder[p2index][1];
+			p1newElo = options.skipP1 ? p1elo : ladder[p1index][1];
+			p2newElo = options.skipP2 ? p2elo : ladder[p2index][1];
 
 			// console.log('L: ' + ladder.map(r => ''+Math.round(r[1])+' '+r[2]).join('\n'));
 
 			// move p1 to its new location
 			let newIndex = p1index;
-			while (newIndex > 0 && ladder[newIndex - 1][1] <= p1newElo) newIndex--;
-			while (newIndex === p1index || (ladder[newIndex] && ladder[newIndex][1] > p1newElo)) newIndex++;
-			// console.log('ni='+newIndex+', p1i='+p1index);
-			if (newIndex !== p1index && newIndex !== p1index + 1) {
-				const row = ladder.splice(p1index, 1)[0];
-				// adjust for removed row
-				if (newIndex > p1index) newIndex--;
-				if (p2index > p1index) p2index--;
+			if (!options.skipP1) {
+				while (newIndex > 0 && ladder[newIndex - 1][1] <= p1newElo) newIndex--;
+				while (newIndex === p1index || (ladder[newIndex] && ladder[newIndex][1] > p1newElo)) newIndex++;
+				// console.log('ni='+newIndex+', p1i='+p1index);
+				if (newIndex !== p1index && newIndex !== p1index + 1) {
+					const row = ladder.splice(p1index, 1)[0];
+					// adjust for removed row
+					if (newIndex > p1index) newIndex--;
+					if (p2index > p1index) p2index--;
 
-				ladder.splice(newIndex, 0, row);
-				// adjust for inserted row
-				if (p2index >= newIndex) p2index++;
+					ladder.splice(newIndex, 0, row);
+					// adjust for inserted row
+					if (p2index >= newIndex) p2index++;
+				}
 			}
 
 			// move p2
 			newIndex = p2index;
-			while (newIndex > 0 && ladder[newIndex - 1][1] <= p2newElo) newIndex--;
-			while (newIndex === p2index || (ladder[newIndex] && ladder[newIndex][1] > p2newElo)) newIndex++;
-			// console.log('ni='+newIndex+', p2i='+p2index);
-			if (newIndex !== p2index && newIndex !== p2index + 1) {
-				const row = ladder.splice(p2index, 1)[0];
-				// adjust for removed row
-				if (newIndex > p2index) newIndex--;
+			if (!options.skipP2) {
+				while (newIndex > 0 && ladder[newIndex - 1][1] <= p2newElo) newIndex--;
+				while (newIndex === p2index || (ladder[newIndex] && ladder[newIndex][1] > p2newElo)) newIndex++;
+				// console.log('ni='+newIndex+', p2i='+p2index);
+				if (newIndex !== p2index && newIndex !== p2index + 1) {
+					const row = ladder.splice(p2index, 1)[0];
+					// adjust for removed row
+					if (newIndex > p2index) newIndex--;
 
-				ladder.splice(newIndex, 0, row);
+					ladder.splice(newIndex, 0, row);
+				}
 			}
 
 			const p1 = Users.getExact(p1name);
-			if (p1) p1.mmrCache[formatid] = +p1newElo;
+			if (p1 && !options.skipP1) p1.mmrCache[formatid] = +p1newElo;
 			const p2 = Users.getExact(p2name);
-			if (p2) p2.mmrCache[formatid] = +p2newElo;
+			if (p2 && !options.skipP2) p2.mmrCache[formatid] = +p2newElo;
 			void this.save();
+			const p1finalIndex = options.skipP1 ? -1 : this.indexOfUser(p1name);
+			const p2finalIndex = options.skipP2 ? -1 : this.indexOfUser(p2name);
+			const p1newRank = !options.skipP1 && formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p1finalIndex) : null;
+			const p2newRank = !options.skipP2 && formatid === CHAMPIONS_RANK_FORMAT ? this.getRankAtIndex(p2finalIndex) : null;
 
 			if (!room.battle) {
 				Monitor.warn(`room expired before ladder update was received`);
@@ -258,16 +701,30 @@ export class LadderStore {
 			}
 
 			let reasons = `${Math.round(p1newElo) - Math.round(p1elo)} for ${p1score > 0.9 ? 'winning' : (p1score < 0.1 ? 'losing' : 'tying')}`;
-			if (!reasons.startsWith('-')) reasons = '+' + reasons;
-			room.addRaw(
-				Utils.html`${p1name}'s rating: ${Math.round(p1elo)} &rarr; <strong>${Math.round(p1newElo)}</strong><br />(${reasons})`
-			);
+			if (!options.skipP1) {
+				if (!reasons.startsWith('-')) reasons = '+' + reasons;
+				room.addRaw(
+					Utils.html`${p1name}'s rating: ${Math.round(p1elo)} &rarr; <strong>${Math.round(p1newElo)}</strong><br />(${reasons})`
+				);
+			}
 
 			reasons = `${Math.round(p2newElo) - Math.round(p2elo)} for ${p2score > 0.9 ? 'winning' : (p2score < 0.1 ? 'losing' : 'tying')}`;
-			if (!reasons.startsWith('-')) reasons = '+' + reasons;
-			room.addRaw(
-				Utils.html`${p2name}'s rating: ${Math.round(p2elo)} &rarr; <strong>${Math.round(p2newElo)}</strong><br />(${reasons})`
-			);
+			if (!options.skipP2) {
+				if (!reasons.startsWith('-')) reasons = '+' + reasons;
+				room.addRaw(
+					Utils.html`${p2name}'s rating: ${Math.round(p2elo)} &rarr; <strong>${Math.round(p2newElo)}</strong><br />(${reasons})`
+				);
+			}
+			if (formatid === CHAMPIONS_RANK_FORMAT) {
+				if (!options.skipP1) {
+					room.addRaw(championsRankDeltaHTML(p1name, p1elo, p1newElo, p1oldRank, p1newRank, ladder, p1finalIndex));
+					addChampionsRankProtocol(room, p1name, p1newRank, p1newElo);
+				}
+				if (!options.skipP2) {
+					room.addRaw(championsRankDeltaHTML(p2name, p2elo, p2newElo, p2oldRank, p2newRank, ladder, p2finalIndex));
+					addChampionsRankProtocol(room, p2name, p2newRank, p2newElo);
+				}
+			}
 
 			room.update();
 		} catch (e: any) {

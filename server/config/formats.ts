@@ -145,6 +145,14 @@ const natDexChampionsModernSinglesOUBans = [
 	'Raichu-Mega-Y', 'Raichunite Y', 'Shedinja', 'Starmie-Mega', 'Urshifu-Single-Strike',
 ];
 
+const natDexChampionsLegendsSinglesOUBans = [
+	...natDexChampionsSinglesOUBans.filter(ban => ![
+		'Baxcalibur', 'Melmetal', 'Raichu-Mega-Y', 'Raichunite Y', 'Starmie-Mega',
+	].includes(ban)),
+	'Magearna-Original', 'Magearna-Mega', 'Magearna-Original-Mega', 'Magearnite',
+	'Zygarde-Mega', 'Zygardite',
+];
+
 const AllFormats: import('../sim/dex-formats').FormatList = [
 
 	// S/V Singles
@@ -491,16 +499,18 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		onValidateSet: validateNatDexChampionsPokebilitiesAAASet,
 	},
 	{
-		section: "NatDex Champions Modern",
+		section: "NatDex Champions: Legends",
 	},
 	{
-		name: "[Gen 9] NatDex Champions (Modern) OU",
+		name: "[Gen 9] NatDex Champions: Legends OU",
 		mod: 'gen9natdexchampsmodern',
-		searchShow: false,
 		ruleset: ['Standard NatDex', 'Tera Type Preview', 'Terapagos Terastal Clause', 'Adjust Level = 50'],
-		banlist: natDexChampionsModernSinglesOUBans,
+		banlist: natDexChampionsLegendsSinglesOUBans,
 		unbanlist: [...natDexChampionsSinglesTestingUnbans, ...natDexChampionsMoveUnbans],
 		onValidateSet: validateNatDexChampionsOUSet,
+	},
+	{
+		section: "NatDex Champions Modern",
 	},
 	{
 		name: "[Gen 9] NatDex Champions (Modern) Doubles",
@@ -6024,7 +6034,7 @@ const visibleFormatIds = new Set([
 	'gen9ndcdoublesdraftma',
 	'gen9natdexchampionscustomgame',
 	'gen9natdexchampionspokebilitiesaaa',
-	'gen9natdexchampionsmodernou',
+	'gen9natdexchampionslegendsou',
 	'gen9natdexchampionsmoderndoubles',
 	'gen9natdexchampionsmoderndraft',
 	'gen9ndcmoderndraftma',

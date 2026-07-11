@@ -18,6 +18,7 @@ import { BattleTextParser } from "./battle-text-parser";
 const isNatDexChampionsModernFormat = (format: string) => {
 	const formatid = toID(format);
 	return (
+		formatid.includes('natdexchampionslegends') || formatid.includes('natdexchampslegends') ||
 		formatid.includes('natdexchampionsmodern') || formatid.includes('natdexchampsmodern') ||
 		formatid === 'gen9ndcmoderndraftma' || formatid === 'gen9ndcmoderndoublesdraftma'
 	);

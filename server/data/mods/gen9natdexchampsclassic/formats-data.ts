@@ -29,10 +29,114 @@ for (const id of ids) {
 	};
 }
 
+const natDexFormTierParents: {[id: string]: string} = {
+	arceusbug: 'arceus',
+	arceusdark: 'arceus',
+	arceusdragon: 'arceus',
+	arceuselectric: 'arceus',
+	arceusfairy: 'arceus',
+	arceusfighting: 'arceus',
+	arceusfire: 'arceus',
+	arceusflying: 'arceus',
+	arceusghost: 'arceus',
+	arceusgrass: 'arceus',
+	arceusground: 'arceus',
+	arceusice: 'arceus',
+	arceuspoison: 'arceus',
+	arceuspsychic: 'arceus',
+	arceusrock: 'arceus',
+	arceussteel: 'arceus',
+	arceuswater: 'arceus',
+	basculinbluestriped: 'basculin',
+	basculinwhitestriped: 'basculin',
+	keldeoresolute: 'keldeo',
+	pumpkaboosmall: 'pumpkaboo',
+	pumpkaboolarge: 'pumpkaboo',
+	pumpkaboosuper: 'pumpkaboo',
+	magearnaoriginal: 'magearna',
+	toxtricitylowkey: 'toxtricity',
+	sinisteaantique: 'sinistea',
+	zarudedada: 'zarude',
+	squawkabillyblue: 'squawkabilly',
+	squawkabillyyellow: 'squawkabilly',
+	squawkabillywhite: 'squawkabilly',
+	tatsugiridroopy: 'tatsugiri',
+	tatsugiristretchy: 'tatsugiri',
+	dudunsparcethreesegment: 'dudunsparce',
+	poltchageistartisan: 'poltchageist',
+};
+
+for (const [id, parentId] of Object.entries(natDexFormTierParents)) {
+	const parentData = targetTable[parentId];
+	const formData = targetTable[id];
+	if (!parentData || !formData) continue;
+	const tier = parentData.natDexTier || parentData.tier;
+	targetTable[id] = {
+		...formData,
+		tier: tier as any,
+		doublesTier: (usableTier(formData.doublesTier) ? formData.doublesTier : parentData.doublesTier || tier) as any,
+		natDexTier: tier as any,
+		isNonstandard: undefined,
+	};
+}
+
+for (const [id, data] of Object.entries(targetTable)) {
+	if (data.tier !== 'UUBL' && data.natDexTier !== 'UUBL') continue;
+	targetTable[id] = {
+		...data,
+		tier: data.tier === 'UUBL' ? 'UU' : data.tier,
+		natDexTier: data.natDexTier === 'UUBL' ? 'UU' : data.natDexTier,
+	};
+}
+
+const championsUUTierOU = new Set([
+	'aegislash', 'alakazammega', 'alomomola', 'ceruledge', 'charizardmegay',
+	'cinderace', 'clefablemega', 'corviknight', 'darkrai', 'darmanitangalar', 'delphoxmega',
+	'deoxysspeed', 'dragapult', 'dragonite', 'ferrothorn', 'floettemega', 'froslassmega',
+	'garchomp', 'genesect', 'gholdengo', 'glimmoramega', 'gliscor', 'greattusk',
+	'hatterene', 'heatran', 'irontreads', 'ironvaliant', 'kingambit', 'kyurem',
+	'landorus', 'landorustherian', 'lopunnymega', 'meganiummega', 'melmetal', 'moltres',
+	'ogerponwellspring', 'pelipper', 'ragingbolt', 'regieleki', 'rillaboom', 'samurotthisui',
+	'scizormega', 'slowbro', 'slowkinggalar', 'starmiemega', 'tapukoko', 'tapulele',
+	'terapagos', 'tinglu', 'tornadustherian', 'toxapex', 'urshifu', 'urshifurapidstrike',
+	'volcarona', 'walkingwake', 'zamazenta', 'zapdos',
+]);
+
+const championsUUTierUU = new Set([
+	'blaziken', 'charizardmegax', 'clodsire', 'dianciemega', 'dondozo', 'gallademega', 'greninja',
+	'greninjabond', 'gyarados', 'gyaradosmega', 'hawlucha', 'hoopaunbound', 'ironcrown',
+	'ironhands', 'ironmoth', 'kartana', 'kommoo', 'latios', 'latiosmega',
+	'manaphy', 'mawilemega', 'medichammega', 'meowscarada', 'ogerponcornerstone',
+	'ogerponcornerstonetera', 'ogerponwellspringtera', 'okidogi', 'pecharunt', 'pinsirmega',
+	'terapagosterastal', 'thundurustherian', 'tyranitarmega', 'weavile', 'xurkitree',
+	'zapdosgalar',
+]);
+
+const natDexChampionsOUTierUbers = new Set([
+	'alakazammega', 'darmanitangalar', 'darmanitangalarzen', 'dragapult',
+	'genesect', 'genesectburn', 'genesectchill', 'genesectdouse', 'genesectshock',
+	'landorus', 'melmetal', 'raichumegay', 'roaringmoon', 'shedinja', 'starmiemega', 'urshifu',
+]);
+
+const setChampionsTier = (id: string, tier: 'Uber' | 'OU' | 'UU') => {
+	const data = targetTable[id];
+	if (!data) return;
+	targetTable[id] = {
+		...data,
+		tier,
+		natDexTier: tier,
+	};
+};
+
+for (const id of championsUUTierUU) setChampionsTier(id, 'UU');
+for (const id of championsUUTierOU) setChampionsTier(id, 'OU');
+for (const id of natDexChampionsOUTierUbers) setChampionsTier(id, 'Uber');
+setChampionsTier('baxcalibur', 'Uber');
+
 targetTable.greninjabond = {
 	...targetTable.greninja,
 	tier: "UU",
 	doublesTier: "(DUU)",
-	natDexTier: "UUBL",
+	natDexTier: "UU",
 	isNonstandard: undefined,
 };

@@ -376,6 +376,7 @@ export class DexSearch {
 			}
 
 			let typeIndex = DexSearch.typeTable[type];
+			if (this.typedSearch?.isHiddenSearchResult(type, id)) continue;
 
 			// For performance, with a query length of 1, we only fill the first bucket
 			if (query.length === 1 && typeIndex !== (searchType ? searchTypeIndex : 1)) continue;
@@ -410,6 +411,7 @@ export class DexSearch {
 				matchEnd = query.length;
 				if (matchEnd) matchEnd += (BattleSearchIndexOffset[i][matchEnd - 1] || '0').charCodeAt(0) - 48;
 			}
+			if (this.typedSearch?.isHiddenSearchResult(type, id)) continue;
 
 			// some aliases are substrings
 			if (queryAlias === id && query !== id) continue;
@@ -583,8 +585,10 @@ abstract class BattleTypedSearch<T extends SearchType> {
 	protected formatType: 'doubles' | 'bdsp' | 'bdspdoubles' | 'rs' | 'frlg' | 'bw1' | 'letsgo' | 'metronome' | 'natdex' |
 		'nfe' | 'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'predlcnatdex' | 'svdlc1' | 'svdlc1doubles' |
 		'svdlc1natdex' | 'stadium' | 'lc' | 'legendsza' | 'champions' |
-		'natdexchampsclassic' | 'natdexchampsclassicdoubles' | 'natdexchampsmodern' | 'natdexchampsmoderndoubles' | null = null;
-	protected mod: 'gen9natdexchampsclassic' | 'gen9natdexchampsmodern' | '' = '';
+		'natdexchampsclassic' | 'natdexchampsclassicdoubles' | 'natdexchampsclassicma' | 'natdexchampsclassicmadoubles' |
+		'natdexchampsmodern' | 'natdexchampsmoderndoubles' | 'natdexchampsmodernma' | 'natdexchampsmodernmadoubles' | null = null;
+	protected mod: 'gen9natdexchampsclassic' | 'gen9natdexchampsclassicma' |
+		'gen9natdexchampsmodern' | 'gen9natdexchampsmodernma' | '' = '';
 	isDoubles = false;
 
 	/**
@@ -617,7 +621,17 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		}
 
 		const setMod = typeof speciesOrSet === 'string' ? '' : toID((speciesOrSet as Dex.PokemonSet & { mod?: string }).mod);
-		if (setMod === 'gen9natdexchampsclassic') {
+		if (setMod === 'gen9natdexchampsclassicma') {
+			this.mod = 'gen9natdexchampsclassicma';
+			this.formatType = format.includes('doubles') ? 'natdexchampsclassicmadoubles' : 'natdexchampsclassicma';
+			this.dex = Dex.mod('gen9natdexchampsclassicma' as ID);
+			this.isDoubles = format.includes('doubles');
+		} else if (setMod === 'gen9natdexchampsmodernma') {
+			this.mod = 'gen9natdexchampsmodernma';
+			this.formatType = format.includes('doubles') ? 'natdexchampsmodernmadoubles' : 'natdexchampsmodernma';
+			this.dex = Dex.mod('gen9natdexchampsmodernma' as ID);
+			this.isDoubles = format.includes('doubles');
+		} else if (setMod === 'gen9natdexchampsclassic') {
 			this.mod = 'gen9natdexchampsclassic';
 			this.formatType = format.includes('doubles') ? 'natdexchampsclassicdoubles' : 'natdexchampsclassic';
 			this.dex = Dex.mod('gen9natdexchampsclassic' as ID);
@@ -665,11 +679,46 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			format = format.slice(7) as ID;
 			if (!format) format = 'ou' as ID;
 		}
-		if (format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')) {
+		if (
+			format.includes('natdexchampionsmodernma') || format.includes('natdexchampsmodernma') ||
+			format === 'ndcmoderndraftma' || format === 'ndcmoderndoublesdraftma'
+		) {
+			this.mod = 'gen9natdexchampsmodernma';
+			this.formatType = format.includes('doubles') ? 'natdexchampsmodernmadoubles' : 'natdexchampsmodernma';
+			this.dex = Dex.mod('gen9natdexchampsmodernma' as ID);
+			format = format
+				.replace('natdexchampionsmodernma', '')
+				.replace('natdexchampsmodernma', '')
+				.replace('ndcmoderndoublesdraftma', 'doubles')
+				.replace('ndcmoderndraftma', '') as ID;
+			if (!format) format = 'ou' as ID;
+			this.isDoubles = format.includes('doubles');
+		} else if (
+			format.includes('natdexchampionsclassicma') || format.includes('natdexchampsclassicma') ||
+			format === 'ndcdraftma' || format === 'ndcdoublesdraftma'
+		) {
+			this.mod = 'gen9natdexchampsclassicma';
+			this.formatType = format.includes('doubles') ? 'natdexchampsclassicmadoubles' : 'natdexchampsclassicma';
+			this.dex = Dex.mod('gen9natdexchampsclassicma' as ID);
+			format = format
+				.replace('natdexchampionsclassicma', '')
+				.replace('natdexchampsclassicma', '')
+				.replace('ndcdoublesdraftma', 'doubles')
+				.replace('ndcdraftma', '') as ID;
+			if (!format) format = 'ou' as ID;
+			this.isDoubles = format.includes('doubles');
+		} else if (
+			format.includes('natdexchampionslegends') || format.includes('natdexchampslegends') ||
+			format.includes('natdexchampionsmodern') || format.includes('natdexchampsmodern')
+		) {
 			this.mod = 'gen9natdexchampsmodern';
 			this.formatType = format.includes('doubles') ? 'natdexchampsmoderndoubles' : 'natdexchampsmodern';
 			this.dex = Dex.mod('gen9natdexchampsmodern' as ID);
-			format = format.replace('natdexchampionsmodern', '').replace('natdexchampsmodern', '') as ID;
+			format = format
+				.replace('natdexchampionslegends', '')
+				.replace('natdexchampslegends', '')
+				.replace('natdexchampionsmodern', '')
+				.replace('natdexchampsmodern', '') as ID;
 			if (!format) format = 'ou' as ID;
 			this.isDoubles = format.includes('doubles');
 		} else if (format.includes('natdexchampions') || format.includes('natdexchamps')) {
@@ -797,6 +846,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 
 			for (const id in this.getTable()) {
 				if (!(id in legalityFilter)) {
+					if (this.isHiddenSearchResult(this.searchType, id as ID)) continue;
 					this.baseIllegalResults.push([this.searchType, id as ID]);
 					this.illegalReasons[id] = 'Illegal';
 				}
@@ -862,8 +912,12 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		if (this.formatType === 'champions') table = table['champions'];
 		if (this.formatType === 'natdexchampsclassic') table = table['gen9natdexchampsclassic'];
 		if (this.formatType === 'natdexchampsclassicdoubles') table = table['gen9natdexchampsclassicdoubles'];
+		if (this.formatType === 'natdexchampsclassicma') table = table['gen9natdexchampsclassicma'];
+		if (this.formatType === 'natdexchampsclassicmadoubles') table = table['gen9natdexchampsclassicmadoubles'];
 		if (this.formatType === 'natdexchampsmodern') table = table['gen9natdexchampsmodern'];
 		if (this.formatType === 'natdexchampsmoderndoubles') table = table['gen9natdexchampsmoderndoubles'];
+		if (this.formatType === 'natdexchampsmodernma') table = table['gen9natdexchampsmodernma'];
+		if (this.formatType === 'natdexchampsmodernmadoubles') table = table['gen9natdexchampsmodernmadoubles'];
 		if (speciesid in table.learnsets) return speciesid;
 		const species = this.dex.species.get(speciesid);
 		if (!species.exists) return '' as ID;
@@ -939,8 +993,12 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			if (this.formatType === 'champions') table = table['champions'];
 			if (this.formatType === 'natdexchampsclassic') table = table['gen9natdexchampsclassic'];
 			if (this.formatType === 'natdexchampsclassicdoubles') table = table['gen9natdexchampsclassicdoubles'];
+			if (this.formatType === 'natdexchampsclassicma') table = table['gen9natdexchampsclassicma'];
+			if (this.formatType === 'natdexchampsclassicmadoubles') table = table['gen9natdexchampsclassicmadoubles'];
 			if (this.formatType === 'natdexchampsmodern') table = table['gen9natdexchampsmodern'];
 			if (this.formatType === 'natdexchampsmoderndoubles') table = table['gen9natdexchampsmoderndoubles'];
+			if (this.formatType === 'natdexchampsmodernma') table = table['gen9natdexchampsmodernma'];
+			if (this.formatType === 'natdexchampsmodernmadoubles') table = table['gen9natdexchampsmodernmadoubles'];
 			let learnset = table.learnsets[learnsetid];
 			const eggMovesOnly = this.eggMovesOnly(learnsetid, speciesid);
 			if (this.formatType?.startsWith('natdexchamps') && learnset && (moveid in learnset) && !eggMovesOnly) {
@@ -985,8 +1043,12 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'champions' ? `champions` :
 			this.formatType === 'natdexchampsclassic' ? `gen9natdexchampsclassic` :
 			this.formatType === 'natdexchampsclassicdoubles' ? `gen9natdexchampsclassicdoubles` :
+			this.formatType === 'natdexchampsclassicma' ? `gen9natdexchampsclassicma` :
+			this.formatType === 'natdexchampsclassicmadoubles' ? `gen9natdexchampsclassicmadoubles` :
 			this.formatType === 'natdexchampsmodern' ? `gen9natdexchampsmodern` :
 			this.formatType === 'natdexchampsmoderndoubles' ? `gen9natdexchampsmoderndoubles` :
+			this.formatType === 'natdexchampsmodernma' ? `gen9natdexchampsmodernma` :
+			this.formatType === 'natdexchampsmodernmadoubles' ? `gen9natdexchampsmodernmadoubles` :
 			`gen${gen}`;
 		if (table?.[tableKey]) {
 			table = table[tableKey];
@@ -1021,11 +1083,17 @@ abstract class BattleTypedSearch<T extends SearchType> {
 	abstract getBaseResults(): SearchRow[];
 	abstract filter(input: SearchRow, filters: string[][]): boolean;
 	defaultFilter?(input: SearchRow[]): SearchRow[];
+	isHiddenSearchResult(type: SearchType, id: ID): boolean {
+		return false;
+	}
 	abstract sort(input: SearchRow[], sortCol: string, reverseSort?: boolean): SearchRow[];
 }
 
 class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 	override sortRow: SearchRow = ['sortpokemon', ''];
+	override isHiddenSearchResult(type: SearchType, id: ID): boolean {
+		return false;
+	}
 	getTable() {
 		return BattlePokedex;
 	}
@@ -1091,10 +1159,18 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 			table = table[`gen9natdexchampsclassic`];
 		} else if (this.formatType === 'natdexchampsclassicdoubles') {
 			table = table[`gen9natdexchampsclassicdoubles`];
+		} else if (this.formatType === 'natdexchampsclassicma') {
+			table = table[`gen9natdexchampsclassicma`];
+		} else if (this.formatType === 'natdexchampsclassicmadoubles') {
+			table = table[`gen9natdexchampsclassicmadoubles`];
 		} else if (this.formatType === 'natdexchampsmodern') {
 			table = table[`gen9natdexchampsmodern`];
 		} else if (this.formatType === 'natdexchampsmoderndoubles') {
 			table = table[`gen9natdexchampsmoderndoubles`];
+		} else if (this.formatType === 'natdexchampsmodernma') {
+			table = table[`gen9natdexchampsmodernma`];
+		} else if (this.formatType === 'natdexchampsmodernmadoubles') {
+			table = table[`gen9natdexchampsmodernmadoubles`];
 		} else if (isVGCOrBS) {
 			table = table[`gen${dex.gen}vgc`];
 		} else if (dex.gen === 9 && isHackmons && !this.formatType) {
@@ -1305,6 +1381,8 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 			});
 		}
 
+		tierSet = tierSet.filter(([type, id]) => !this.isHiddenSearchResult(type as SearchType, id as ID));
+
 		return tierSet;
 	}
 	filter(row: SearchRow, filters: string[][]) {
@@ -1470,10 +1548,18 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 			table = table[`gen9natdexchampsclassic`];
 		} else if (this.formatType === 'natdexchampsclassicdoubles') {
 			table = table[`gen9natdexchampsclassicdoubles`];
+		} else if (this.formatType === 'natdexchampsclassicma') {
+			table = table[`gen9natdexchampsclassicma`];
+		} else if (this.formatType === 'natdexchampsclassicmadoubles') {
+			table = table[`gen9natdexchampsclassicmadoubles`];
 		} else if (this.formatType === 'natdexchampsmodern') {
 			table = table[`gen9natdexchampsmodern`];
 		} else if (this.formatType === 'natdexchampsmoderndoubles') {
 			table = table[`gen9natdexchampsmoderndoubles`];
+		} else if (this.formatType === 'natdexchampsmodernma') {
+			table = table[`gen9natdexchampsmodernma`];
+		} else if (this.formatType === 'natdexchampsmodernmadoubles') {
+			table = table[`gen9natdexchampsmodernmadoubles`];
 		} else if (this.formatType?.endsWith('doubles')) { // no natdex/bdsp doubles support
 			table = table[`gen${this.dex.gen}doubles`];
 		} else if (this.formatType === 'metronome') {
@@ -1874,8 +1960,12 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (this.formatType === 'champions') lsetTable = lsetTable['champions'];
 		if (this.formatType === 'natdexchampsclassic') lsetTable = lsetTable['gen9natdexchampsclassic'];
 		if (this.formatType === 'natdexchampsclassicdoubles') lsetTable = lsetTable['gen9natdexchampsclassicdoubles'];
+		if (this.formatType === 'natdexchampsclassicma') lsetTable = lsetTable['gen9natdexchampsclassicma'];
+		if (this.formatType === 'natdexchampsclassicmadoubles') lsetTable = lsetTable['gen9natdexchampsclassicmadoubles'];
 		if (this.formatType === 'natdexchampsmodern') lsetTable = lsetTable['gen9natdexchampsmodern'];
 		if (this.formatType === 'natdexchampsmoderndoubles') lsetTable = lsetTable['gen9natdexchampsmoderndoubles'];
+		if (this.formatType === 'natdexchampsmodernma') lsetTable = lsetTable['gen9natdexchampsmodernma'];
+		if (this.formatType === 'natdexchampsmodernmadoubles') lsetTable = lsetTable['gen9natdexchampsmodernmadoubles'];
 		if (this.formatType?.startsWith('ssdlc1')) lsetTable = lsetTable['gen8dlc1'];
 		if (this.formatType?.startsWith('predlc')) lsetTable = lsetTable['gen9predlc'];
 		if (this.formatType?.startsWith('svdlc1')) lsetTable = lsetTable['gen9dlc1'];

@@ -57,6 +57,10 @@ export class LadderStore {
 		return mmr;
 	}
 
+	async getRankPayload(_userid: string, _createIfNeeded = false) {
+		return '';
+	}
+
 	/**
 	 * Update the Elo rating for two players after a battle, and display
 	 * the results in the passed room.

@@ -17,6 +17,7 @@ const PERIODIC_MATCH_INTERVAL = 60 * SECONDS;
 
 import type { ChallengeType } from './room-battle';
 import { BattleReady, BattleChallenge, GameChallenge, BattleInvite, challenges } from './ladders-challenges';
+import { getExternalLadderBotRating, getLadderBotSettings, isExternalLadderBot, pickLadderBot } from './ladder-bots';
 
 /**
  * Keys are formatids
@@ -67,6 +68,7 @@ class Ladder extends LadderStore {
 		}
 
 		let rating = 0;
+		let rank = '';
 		let valResult;
 		let removeNicknames = !!(user.locked || user.namelocked);
 
@@ -110,6 +112,10 @@ class Ladder extends LadderStore {
 				TeamValidatorAsync.get(this.formatid).validateTeam(team, { removeNicknames, user: uid }),
 				this.getRating(uid),
 			]);
+			if (isExternalLadderBot(this.formatid, uid)) {
+				rating = getExternalLadderBotRating(this.formatid, uid);
+			}
+			rank = await this.getRankPayload(uid, !isExternalLadderBot(this.formatid, uid));
 			if (uid !== user.id) {
 				// User feedback for renames handled elsewhere.
 				return null;
@@ -122,6 +128,10 @@ class Ladder extends LadderStore {
 			}
 			const validator = TeamValidatorAsync.get(this.formatid);
 			valResult = await validator.validateTeam(team, { removeNicknames, user: user.id });
+			if (isExternalLadderBot(this.formatid, user.id)) {
+				rating = getExternalLadderBotRating(this.formatid, user.id);
+			}
+			rank = await this.getRankPayload(user.id, false);
 		}
 
 		if (!valResult.startsWith('1')) {
@@ -135,7 +145,7 @@ class Ladder extends LadderStore {
 		const settings = { ...user.battleSettings, team: valResult.slice(1) };
 		user.battleSettings.inviteOnly = false;
 		user.battleSettings.hidden = false;
-		return new BattleReady(userid, this.formatid, settings, rating, challengeType);
+		return new BattleReady(userid, this.formatid, settings, rating, rank, challengeType);
 	}
 
 	static getChallenging(userid: ID) {
@@ -331,6 +341,8 @@ class Ladder extends LadderStore {
 	 */
 	matchmakingOK(matches: [BattleReady, User][]) {
 		const formatid = toID(this.formatid);
+		const botMatch = this.externalBotMatchmakingOK(matches);
+		if (botMatch !== null) return botMatch;
 		const users = matches.map(([ready, user]) => user);
 		const userids = users.map(user => user.id);
 
@@ -365,6 +377,21 @@ class Ladder extends LadderStore {
 		const ratings = matches.map(([search]) => search.rating);
 		if (Math.max(...ratings) - Math.min(...ratings) > searchRange) return false;
 
+		matches[0][1].lastMatch = matches[1][1].id;
+		matches[1][1].lastMatch = matches[0][1].id;
+		return true;
+	}
+
+	externalBotMatchmakingOK(matches: [BattleReady, User][]) {
+		const formatid = toID(this.formatid);
+		const settings = getLadderBotSettings(formatid);
+		const botEntries = matches.filter(([, user]) => isExternalLadderBot(formatid, user.id));
+		if (!botEntries.length) return null;
+		if (botEntries.length > 1 || !settings) return false;
+		const humanEntry = matches.find(([, user]) => !isExternalLadderBot(formatid, user.id));
+		if (!humanEntry) return false;
+		const [humanSearch, humanUser] = humanEntry;
+		if (humanSearch.rating >= settings.maxElo) return false;
 		matches[0][1].lastMatch = matches[1][1].id;
 		matches[1][1].lastMatch = matches[0][1].id;
 		return true;
@@ -406,6 +433,44 @@ class Ladder extends LadderStore {
 
 		formatTable.searches.set(newSearch.userid, newSearch);
 		Ladder.updateSearch(user);
+		if (!isExternalLadderBot(formatid, newSearch.userid)) this.maybeScheduleBotMatch(newSearch);
+	}
+
+	maybeScheduleBotMatch(search: BattleReady) {
+		const settings = getLadderBotSettings(search.formatid);
+		if (!settings || search.rating >= settings.maxElo) return;
+		setTimeout(() => void this.tryBotMatch(search.formatid, search.userid), settings.delaySeconds * 1000);
+	}
+
+	async tryBotMatch(formatid: string, userid: ID) {
+		const formatTable = Ladders.searches.get(formatid);
+		const search = formatTable?.searches.get(userid);
+		if (!search || search.rating >= (getLadderBotSettings(formatid)?.maxElo || 1200)) return;
+		const user = Users.get(userid);
+		if (!user?.connected || user.id !== userid) {
+			if (formatTable) formatTable.searches.delete(userid);
+			return;
+		}
+		const picked = pickLadderBot(formatid, search.rating);
+		if (!picked) return;
+		const validator = TeamValidatorAsync.get(formatid);
+		const valResult = await validator.validateTeam(picked.team, {user: picked.bot.userid});
+		if (!valResult.startsWith('1')) {
+			Monitor.warn(`Ladder bot ${picked.bot.userid} has an invalid ${formatid} team: ${valResult.slice(1).replace(/\n/g, ' | ')}`);
+			return;
+		}
+		const botReady = new BattleReady(
+			picked.bot.userid as ID,
+			formatid,
+			{...user.battleSettings, team: valResult.slice(1), inviteOnly: false, hidden: false},
+			picked.bot.rating,
+			'',
+			search.challengeType,
+			picked.bot
+		);
+		formatTable!.searches.delete(userid);
+		Ladder.updateSearch(user);
+		Ladder.match([search, botReady]);
 	}
 
 	/**
@@ -448,15 +513,17 @@ class Ladder extends LadderStore {
 		let missingUser = null;
 		let minRating = Infinity;
 		for (const ready of readies) {
-			const user = Users.get(ready.userid);
-			if (!user) {
+			const user = ready.bot ? null : Users.get(ready.userid);
+			if (!user && !ready.bot) {
 				missingUser = ready.userid;
 				break;
 			}
 			players.push({
 				user,
+				bot: ready.bot || undefined,
 				team: ready.settings.team,
 				rating: ready.rating,
+				rank: ready.rank,
 				hidden: ready.settings.hidden,
 				inviteOnly: ready.settings.inviteOnly,
 			});

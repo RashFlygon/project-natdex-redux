@@ -349,6 +349,7 @@ export interface FormatData {
 	tournamentShow?: boolean;
 	bestOfDefault?: boolean;
 	teraPreviewDefault?: boolean;
+	terastalClauseOption?: boolean;
 	rated: boolean;
 	teambuilderLevel?: number | null;
 	partner?: boolean;

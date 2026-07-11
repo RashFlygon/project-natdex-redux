@@ -318,10 +318,13 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const natDexChampionsOUTeambuilderBans = new Set([
 			'alakazammega', 'darmanitangalar', 'darmanitangalarzen', 'dragapult',
 			'genesect', 'genesectburn', 'genesectchill', 'genesectdouse', 'genesectshock',
-			'landorus', 'melmetal', 'roaringmoon', 'shedinja', 'starmiemega', 'urshifu',
+			'landorus', 'melmetal', 'raichumegay', 'roaringmoon', 'shedinja', 'starmiemega', 'urshifu',
 		]);
 		const natDexChampionsOUTestUnbans = new Set([
 			'annihilape', 'darkrai', 'walkingwake', 'deoxysspeed',
+		]);
+		const natDexChampionsLegendsOUTeambuilderUnbans = new Set([
+			'baxcalibur', 'baxcaliburmega', 'melmetal', 'raichumegay', 'starmiemega',
 		]);
 		const genNum = Math.floor(isDoubles ? -genIdent : genIdent);
 		const isBW1 = genIdent === 5.1;
@@ -459,6 +462,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				}
 				if (isNatDexChampions) {
 					if (species.isNonstandard && !['Past', 'Unobtainable'].includes(species.isNonstandard)) return 'Illegal';
+					if (isNatDexChampionsModern && natDexChampionsLegendsOUTeambuilderUnbans.has(species.id)) return 'OU';
 					if (!isDoubles && natDexChampionsOUTeambuilderBans.has(species.id)) return 'Uber';
 					if (!isDoubles && natDexChampionsOUTestUnbans.has(species.id)) return 'OU';
 					if ((species.natDexTier || species.tier) === 'UUBL') return 'UU';

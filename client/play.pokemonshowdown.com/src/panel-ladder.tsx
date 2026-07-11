@@ -45,6 +45,7 @@ export class LadderFormatRoom extends PSRoom {
 	loading = false;
 	error?: string;
 	ladderData?: LadderData;
+	ladderHTML?: string;
 
 	constructor(options: any) {
 		super(options);
@@ -67,9 +68,16 @@ export class LadderFormatRoom extends PSRoom {
 	setLadderData = (ladderData: string | undefined) => {
 		this.loading = false;
 		if (ladderData) {
-			this.ladderData = JSON.parse(ladderData);
+			if (PS.teams.usesLocalLadder && ladderData.trim().startsWith('<')) {
+				this.ladderHTML = BattleLog.sanitizeHTML(ladderData);
+				this.ladderData = undefined;
+			} else {
+				this.ladderData = JSON.parse(ladderData);
+				this.ladderHTML = undefined;
+			}
 		} else {
 			this.ladderData = undefined;
+			this.ladderHTML = undefined;
 		}
 		this.update(null);
 	};
@@ -159,6 +167,8 @@ class LadderFormatPanel extends PSRoomPanel<LadderFormatRoom> {
 			return <p><i class="fa fa-refresh fa-spin" aria-hidden></i> <em>Loading...</em></p>;
 		} else if (room.error !== undefined) {
 			return <p>Error: {room.error}</p>;
+		} else if (room.ladderHTML) {
+			return <div dangerouslySetInnerHTML={{__html: room.ladderHTML}} />;
 		} else if (!room.ladderData) {
 			return null;
 		}

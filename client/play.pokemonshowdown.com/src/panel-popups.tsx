@@ -42,6 +42,35 @@ class UserPanel extends PSRoomPanel<UserRoom> {
 	static readonly Model = UserRoom;
 	static readonly location = 'popup';
 
+	renderChampionsProfile(user: any) {
+		const profile = user.championsProfile;
+		if (!profile) return null;
+		const rank = profile.rank;
+		const record = profile.record;
+		const season = profile.season;
+		const total = record.wins + record.losses + record.ties;
+		const winRate = total ? `${Math.round((record.wins / total) * 1000) / 10}%` : '--';
+		return <div class="champions-profile-card">
+			<div class="champions-profile-title">NatDex Champions OU</div>
+			<div class="champions-profile-rank">
+				<span
+					class={`rankicon rankicon-${rank.id}`}
+					title={rank.name}
+					aria-label={rank.name}
+				></span>
+				<strong>{rank.name}</strong> <span>{rank.elo} Elo</span>
+			</div>
+			<div class="champions-profile-meta">
+				#{rank.placement} · {record.wins}W / {record.losses}L / {record.ties}T · {winRate}
+			</div>
+			<div class="champions-profile-season">
+				{season.name}
+				{season.bestPlacement ? ` · Best #${season.bestPlacement}` : ''}
+				{season.peakElo ? ` · Peak ${season.peakElo}` : ''}
+			</div>
+		</div>;
+	}
+
 	renderUser() {
 		const room = this.props.room;
 		if (!room.userid) return null;
@@ -175,6 +204,7 @@ class UserPanel extends PSRoomPanel<UserRoom> {
 			{groupName && <div class="usergroup roomgroup">{groupName}</div>}
 			{globalGroupName && <div class="usergroup globalgroup">{globalGroupName}</div>}
 			{user.customgroup && <div class="usergroup globalgroup">{user.customgroup}</div>}
+			{this.renderChampionsProfile(user)}
 			{!hideInteraction && roomsList}
 		</div>, buttonbar];
 	}

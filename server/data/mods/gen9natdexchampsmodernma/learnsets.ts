@@ -47,10 +47,27 @@ function addMissingMoves(target: LearnsetTable, source: LearnsetTable) {
 	}
 }
 
+function inheritLearnset(target: LearnsetTable, sourceId: string, targetId: string) {
+	const targetTable = target as StringLearnsetTable;
+	const sourceEntry = targetTable[sourceId];
+	if (!sourceEntry?.learnset) return;
+	const targetEntry = targetTable[targetId] || (targetTable[targetId] = {learnset: {}});
+	targetEntry.learnset ||= {};
+	const sourceLearnset = sourceEntry.learnset as {[moveid: string]: string[]};
+	const targetLearnset = targetEntry.learnset as {[moveid: string]: string[]};
+	for (const moveid in sourceLearnset) {
+		targetLearnset[moveid] = Array.from(new Set([
+			...(targetLearnset[moveid] || []),
+			...sourceLearnset[moveid],
+		]));
+	}
+}
+
 export const Learnsets: LearnsetTable = cloneTable(ChampionsLearnsets);
 addMissingMoves(Learnsets, BaseLearnsets);
 addMissingMoves(Learnsets, PLALearnsets);
 addMissingMoves(Learnsets, ZALearnsets);
+inheritLearnset(Learnsets, 'tatsugiri', 'tatsugiridroopy');
 
 const modernLearnsets = Learnsets as StringLearnsetTable;
 for (const id of ['deoxys', 'deoxysattack', 'deoxysdefense', 'deoxysspeed']) {

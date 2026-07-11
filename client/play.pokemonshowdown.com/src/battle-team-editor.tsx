@@ -128,7 +128,9 @@ export class TeamEditorState extends PSModel {
 		}
 	}
 	usesStatPoints() {
-		const isChampionsModern = this.format.includes('champions') || this.format.includes('ndcmodern');
+		const isChampionsModern = this.format.includes('natdexchampionslegends') ||
+			this.format.includes('natdexchampslegends') || this.format.includes('champions') ||
+			this.format.includes('ndcmodern');
 		return isChampionsModern && !(
 			this.format.includes('natdexchampionsclassic') || this.format.includes('natdexchampsclassic') ||
 			this.format === 'gen9ndcdraftma' || this.format === 'gen9ndcdoublesdraftma'
@@ -525,6 +527,9 @@ export class TeamEditorState extends PSModel {
 		return null;
 	}
 	getIVs(set: Dex.PokemonSet) {
+		if (this.usesStatPoints()) {
+			set.ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
+		}
 		const ivs = this.defaultIVs(set);
 		if (set.ivs) Object.assign(ivs, set.ivs);
 		return ivs;
@@ -532,6 +537,7 @@ export class TeamEditorState extends PSModel {
 	defaultIVs(set: Dex.PokemonSet, noGuess = !!set.ivs): Record<Dex.StatName, number> {
 		const useIVs = this.gen > 2;
 		const defaultIVs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
+		if (this.usesStatPoints()) return defaultIVs;
 		if (!useIVs) {
 			for (const stat of Dex.statNames) defaultIVs[stat] = 15;
 		}

@@ -18,6 +18,7 @@
 var isNatDexChampionsModernFormat=function(format){
 var formatid=toID(format);
 return(
+formatid.includes('natdexchampionslegends')||formatid.includes('natdexchampslegends')||
 formatid.includes('natdexchampionsmodern')||formatid.includes('natdexchampsmodern')||
 formatid==='gen9ndcmoderndraftma'||formatid==='gen9ndcmoderndoublesdraftma');
 

@@ -82,6 +82,12 @@
 			this.updateFormats();
 
 			app.user.on('saveteams', this.updateTeams, this);
+			app.user.on('change:userid change:name', this.resetChampionsDetails, this);
+			app.on('response:userdetails', this.updateChampionsDetails, this);
+			this.boundChampionsRankChange = this.handleChampionsRankChange.bind(this);
+			window.addEventListener('championsrankchange', this.boundChampionsRankChange);
+			this.championsDetailsInterval = setInterval(this.maybeRefreshChampionsDetails.bind(this), 5000);
+			this.requestChampionsDetails();
 
 			// news
 			// (created during page load)
@@ -716,6 +722,9 @@
 			if (!this.searching || $.isArray(this.searching) && !this.searching.length) {
 				var format = $formatButton.val();
 				var teamIndex = $teamButton.val();
+				while ($formatButton.next('.champions-format-rank').length) {
+					$formatButton.next('.champions-format-rank').remove();
+				}
 				$formatButton.replaceWith(this.renderFormats(format));
 				$teamButton.replaceWith(this.renderTeams(format, teamIndex));
 
@@ -870,6 +879,9 @@
 			this.$('button[name=format]').each(function (i, el) {
 				var val = el.value;
 				var $teamButton = $(el).closest('form').find('button[name=team]');
+				while ($(el).next('.champions-format-rank').length) {
+					$(el).next('.champions-format-rank').remove();
+				}
 				$(el).replaceWith(self.renderFormats(val));
 				$teamButton.replaceWith(self.renderTeams(val));
 			});
@@ -1043,6 +1055,64 @@
 		// format/team selection
 
 		curFormat: '',
+		championsDetailsRequested: '',
+		championsProfileUserid: '',
+		championsProfile: null,
+		resetChampionsDetails: function () {
+			var userid = app.user.get('userid');
+			if (this.championsProfileUserid === userid && this.championsDetailsRequested === userid) return;
+			this.championsProfileUserid = userid;
+			this.championsProfile = null;
+			this.championsDetailsRequested = '';
+			this.updateFormats();
+			this.requestChampionsDetails();
+		},
+		requestChampionsDetails: function (force) {
+			var userid = app.user.get('userid');
+			if (!userid || !force && this.championsDetailsRequested === userid) return;
+			this.championsDetailsRequested = userid;
+			app.send('/cmd userdetails ' + userid);
+		},
+		updateChampionsDetails: function (data) {
+			if (!data || data.userid !== app.user.get('userid')) return;
+			this.championsProfileUserid = data.userid;
+			this.championsProfile = data.championsProfile || null;
+			this.updateFormats();
+		},
+		maybeRefreshChampionsDetails: function () {
+			if (!app.user.get('userid')) return;
+			var $formatButton = this.$('.mainmenu button[name=format]');
+			if ($formatButton.val() !== 'gen9natdexchampionsou') return;
+			this.requestChampionsDetails(true);
+		},
+		handleChampionsRankChange: function (event) {
+			var userid = app.user.get('userid');
+			var detail = event && event.detail || {};
+			if (!userid || detail.userid !== userid || !detail.rank) return;
+			this.championsProfileUserid = userid;
+			if (!this.championsProfile) this.championsProfile = {};
+			this.championsProfile.rank = detail.rank;
+			this.championsDetailsRequested = '';
+			this.updateFormats();
+			this.requestChampionsDetails(true);
+		},
+		renderChampionsFormatRank: function (formatid) {
+			if (formatid !== 'gen9natdexchampionsou') return '';
+			this.requestChampionsDetails();
+			var userid = app.user.get('userid');
+			var rank = userid && this.championsProfileUserid === userid && this.championsProfile && this.championsProfile.rank;
+			if (!rank && userid) {
+				try {
+					var storedRanks = JSON.parse((window.localStorage && window.localStorage.getItem('ChampionsRanks')) || '{}');
+					var storedRank = storedRanks && storedRanks[userid];
+					if (storedRank && storedRank.id && storedRank.name) rank = storedRank;
+				} catch (e) {}
+			}
+			if (!rank || !rank.id || !rank.name) rank = {id: 'unranked', name: 'Unranked', elo: 1000};
+			var icon = rank.id === 'unranked' ? '' : '<span class="rankicon rankicon-' + BattleLog.escapeHTML(rank.id) + '"></span>';
+			var elo = rank.elo ? ' - ' + BattleLog.escapeHTML('' + rank.elo) + ' Elo' : '';
+			return '<div class="champions-format-rank">' + icon + '<strong>' + BattleLog.escapeHTML(rank.name) + '</strong>' + elo + '</div>';
+		},
 		renderFormats: function (formatid, noChoice) {
 			if (!window.BattleFormats) {
 				return '<button class="select formatselect" name="format" disabled value="' + BattleLog.escapeHTML(formatid) + '"><em>Loading...</em></button>';
@@ -1063,7 +1133,7 @@
 				}
 				formatid = this.curFormat;
 			}
-			return '<button class="select formatselect' + (noChoice ? ' preselected' : '') + '" name="format" value="' + formatid + '"' + (noChoice ? ' disabled' : '') + '>' + BattleLog.escapeFormat(formatid) + '</button>';
+			return '<button class="select formatselect' + (noChoice ? ' preselected' : '') + '" name="format" value="' + formatid + '"' + (noChoice ? ' disabled' : '') + '>' + BattleLog.escapeFormat(formatid) + '</button>' + this.renderChampionsFormatRank(formatid);
 		},
 		curTeamFormat: '',
 		curTeamIndex: 0,
@@ -1187,8 +1257,10 @@
 				group = name.charAt(0);
 				name = name.substr(1);
 			}
-			var color = BattleLog.hashColor(toID(name));
-			var clickableName = '<small>' + BattleLog.escapeHTML(group) + '</small><span class="username" data-roomgroup="' + BattleLog.escapeHTML(group) + '" data-name="' + BattleLog.escapeHTML(name) + '">' + BattleLog.escapeHTML(name) + '</span>';
+			var userid = toID(name);
+			var color = BattleLog.hashColor(userid);
+			var rankIcon = BattleLog.rankIconHTML ? BattleLog.rankIconHTML(userid) : '';
+			var clickableName = '<small>' + BattleLog.escapeHTML(group) + '</small><span class="username" data-roomgroup="' + BattleLog.escapeHTML(group) + '" data-name="' + BattleLog.escapeHTML(name) + '">' + BattleLog.escapeHTML(name) + rankIcon + '</span>';
 			var hlClass = isHighlighted ? ' highlighted' : '';
 			var mineClass = (window.app && app.user && app.user.get('name') === name ? ' mine' : '');
 
@@ -1467,7 +1539,11 @@
 					label.style.display = BattleFormats[format].partner ? '' : 'none';
 				});
 			}
-			$form.find('button[name=format]').val(format).html(BattleLog.escapeFormat(format) || '(Select a format)');
+			var $formatButton = $form.find('button[name=format]');
+			while ($formatButton.next('.champions-format-rank').length) {
+				$formatButton.next('.champions-format-rank').remove();
+			}
+			$formatButton.replaceWith(app.rooms[''].renderFormats(format));
 
 			this.close();
 		}

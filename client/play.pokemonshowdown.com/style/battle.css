@@ -324,13 +324,13 @@ License: GPLv2
 	bottom: 75px;
 }
 .trainer-far {
-	bottom: 232px;
+	bottom: 190px;
 }
 .trainer-near2 {
 	bottom: 232px;
 }
 .trainer-far2 {
-	bottom: 75px;
+	bottom: 65px;
 }
 
 .trainer strong {
@@ -721,6 +721,340 @@ License: GPLv2
 	width: 24px;
 	height: 24px;
 }
+.rankicon {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	margin: -5px 2px -5px 0;
+	vertical-align: middle;
+	background: transparent url(../sprites/itemicons-sheet.png?v1) no-repeat scroll -216px -504px;
+}
+.rankicon-champion {
+	background-position: -288px -336px;
+}
+.rankicon-masterball {
+	background-position: -96px -408px;
+}
+.rankicon-ultraball {
+	background-position: -216px -768px;
+}
+.rankicon-greatball {
+	background-position: -336px -240px;
+}
+.rankicon-pokeball {
+	background-position: -216px -504px;
+}
+.trainer > strong {
+	display: block;
+	max-width: 92px;
+	margin: 0 auto;
+	line-height: 13px;
+	text-align: center;
+	overflow-wrap: anywhere;
+}
+.trainer .rankbadges {
+	display: block;
+	width: 78px;
+	min-height: 34px;
+	line-height: 12px;
+	margin: 10px auto 3px;
+	opacity: 1;
+	text-align: center;
+	white-space: normal;
+}
+.trainer .rankbadge {
+	--rank-main: #c7513c;
+	--rank-light: #fff1e8;
+	--rank-dark: #7d2c22;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+	width: 78px;
+	min-height: 33px;
+	font-size: 10px;
+	font-weight: bold;
+	color: #252525;
+	text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.75);
+	white-space: normal;
+}
+.trainer .rankbadge-masterball {
+	--rank-main: #8d37c9;
+	--rank-light: #f2e5ff;
+	--rank-dark: #4e1c76;
+}
+.trainer .rankbadge-ultraball {
+	--rank-main: #d8a200;
+	--rank-light: #fff2b5;
+	--rank-dark: #765900;
+}
+.trainer .rankbadge-greatball {
+	--rank-main: #2d72c8;
+	--rank-light: #e5f1ff;
+	--rank-dark: #164373;
+}
+.trainer .rankbadge-pokeball {
+	--rank-main: #d45b37;
+	--rank-light: #fff0e7;
+	--rank-dark: #80311c;
+}
+.trainer .rankbadge-champion {
+	--rank-main: #c99b23;
+	--rank-light: #fff5c8;
+	--rank-dark: #6f520d;
+}
+.trainer .rankbadge-banner {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0;
+	box-sizing: border-box;
+	width: 70px;
+	height: 20px;
+	padding: 0 10px;
+	border-radius: 2px;
+	background:
+		linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.55) 18px 19px, transparent 19px),
+		linear-gradient(180deg, var(--rank-light), #ffffff 48%, color-mix(in srgb, var(--rank-main) 22%, #ffffff));
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+.trainer .rankbadge-banner:before,
+.trainer .rankbadge-banner:after {
+	content: "";
+	position: absolute;
+	top: -1px;
+	width: 13px;
+	height: 20px;
+	background: inherit;
+	border-radius: 2px;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 1px rgba(0, 0, 0, 0.22);
+}
+.trainer .rankbadge-division-iii .rankbadge-banner:before,
+.trainer .rankbadge-division-iii .rankbadge-banner:after {
+	display: none;
+}
+.trainer .rankbadge-division-iii .rankbadge-banner {
+	width: 66px;
+	clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
+	border-left: 1px solid var(--rank-dark);
+	border-right: 1px solid var(--rank-dark);
+}
+.trainer .rankbadge-division-ii .rankbadge-banner {
+	background:
+		linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.65) 18px 19px, transparent 19px),
+		linear-gradient(180deg, #ffffff, var(--rank-light) 42%, color-mix(in srgb, var(--rank-main) 30%, #ffffff));
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.95),
+		inset 0 -2px 0 color-mix(in srgb, var(--rank-main) 30%, transparent),
+		0 1px 2px rgba(0, 0, 0, 0.28);
+}
+.trainer .rankbadge-division-ii .rankbadge-banner:before,
+.trainer .rankbadge-division-ii .rankbadge-banner:after {
+	width: 9px;
+	opacity: 0.92;
+}
+.trainer .rankbadge-division-ii .rankbadge-banner:before {
+	left: -5px;
+	transform: skewX(-20deg);
+}
+.trainer .rankbadge-division-ii .rankbadge-banner:after {
+	right: -5px;
+	transform: skewX(20deg);
+}
+.trainer .rankbadge-division-i .rankbadge-banner {
+	height: 22px;
+	background:
+		linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.8) 18px 19px, transparent 19px),
+		linear-gradient(135deg, transparent 0 14%, rgba(255, 255, 255, 0.9) 16%, transparent 29%),
+		linear-gradient(180deg, #ffffff, var(--rank-light) 38%, color-mix(in srgb, var(--rank-main) 42%, #ffffff));
+	border-top-width: 2px;
+	border-bottom-width: 2px;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 1),
+		inset 0 -2px 0 color-mix(in srgb, var(--rank-main) 42%, transparent),
+		0 1px 3px rgba(0, 0, 0, 0.34);
+}
+.trainer .rankbadge-division-i .rankbadge-banner:before {
+	left: -8px;
+	transform: skewX(-30deg);
+}
+.trainer .rankbadge-division-i .rankbadge-banner:after {
+	right: -8px;
+	transform: skewX(30deg);
+}
+.trainer .rankbadge-division-i .rankbadge-banner:before,
+.trainer .rankbadge-division-i .rankbadge-banner:after {
+	height: 22px;
+	border-top-width: 2px;
+	border-bottom-width: 2px;
+}
+.trainer .rankbadge-champion .rankbadge-banner {
+	width: 72px;
+	height: 22px;
+	padding: 0 8px;
+	background:
+		linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.72) 18px 19px, transparent 19px),
+		linear-gradient(135deg, transparent 0 13%, rgba(255, 255, 255, 0.95) 15%, transparent 30%),
+		linear-gradient(180deg, #fffbe0, #ffffff 38%, #ffd86a 68%, #c99b23);
+	border-top-width: 2px;
+	border-bottom-width: 2px;
+	border-color: #6f520d;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 1),
+		inset 0 -2px 0 rgba(111, 82, 13, 0.25),
+		0 1px 4px rgba(111, 82, 13, 0.48);
+}
+.trainer .rankbadge-champion .rankbadge-banner:before,
+.trainer .rankbadge-champion .rankbadge-banner:after {
+	height: 22px;
+	border-top-width: 2px;
+	border-bottom-width: 2px;
+	border-color: #6f520d;
+}
+.trainer .rankbadge-champion .rankbadge-banner:before {
+	left: -7px;
+}
+.trainer .rankbadge-champion .rankbadge-banner:after {
+	right: -7px;
+}
+.trainer .rankbadge-banner:before {
+	left: -7px;
+	transform: skewX(-28deg);
+	border-left: 1px solid var(--rank-dark);
+	border-top: 1px solid var(--rank-dark);
+	border-bottom: 1px solid var(--rank-dark);
+}
+.trainer .rankbadge-banner:after {
+	right: -7px;
+	transform: skewX(28deg);
+	border-right: 1px solid var(--rank-dark);
+	border-top: 1px solid var(--rank-dark);
+	border-bottom: 1px solid var(--rank-dark);
+}
+.trainer .rankbadge-banner {
+	border: 1px solid var(--rank-dark);
+	border-left: 0;
+	border-right: 0;
+}
+.trainer .rankbadge-iconframe {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 24px;
+	width: 24px;
+	height: 20px;
+}
+.trainer .rankbadge-iconframe:before {
+	content: "";
+	position: absolute;
+	left: 6px;
+	top: 3px;
+	width: 12px;
+	height: 12px;
+	border: 1px solid color-mix(in srgb, var(--rank-dark) 68%, #ffffff);
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.55);
+}
+.trainer .rankbadge .rankicon {
+	position: relative;
+	z-index: 2;
+	flex: 0 0 auto;
+	width: 24px;
+	height: 24px;
+	margin: -4px 0;
+	transform: scale(0.72);
+	transform-origin: center;
+}
+.trainer .rankbadge-division {
+	position: relative;
+	z-index: 1;
+	flex: 0 0 24px;
+	line-height: 18px;
+	font-size: 13px;
+	font-weight: bold;
+	font-family: Georgia, "Times New Roman", serif;
+	color: var(--rank-dark);
+	text-align: center;
+	text-shadow: 1px 1px 0 #ffffff;
+}
+.trainer .rankbadge-division-full {
+	font-family: Verdana, sans-serif;
+	font-size: 11px;
+	letter-spacing: 0;
+	min-width: 24px;
+	text-transform: none;
+}
+.trainer .rankbadge-elo {
+	line-height: 11px;
+	font-size: 8px;
+	font-weight: normal;
+	color: #444;
+}
+.trainer .champions-name {
+	display: inline-block;
+	font-weight: bold;
+}
+.champions-name-champion {
+	color: #7d5700;
+}
+.champions-name-masterball {
+	color: #8d37c9;
+}
+.champions-name-ultraball {
+	color: #6f5600;
+}
+.champions-name-greatball {
+	color: #2d72c8;
+}
+.champions-name-pokeball {
+	color: #c7513c;
+}
+.chat .rankicon,
+.userlist .rankicon {
+	transform: scale(0.88);
+	transform-origin: center;
+}
+.ladder .rankicon {
+	margin: -3px 4px -3px 0;
+	transform: none;
+}
+.battle-log .champions-rank-adjustment,
+.battle-log-add .champions-rank-adjustment {
+	margin: 2px 0;
+	line-height: 16px;
+}
+.battle-log .champions-rank-adjustment .rankicon,
+.battle-log-add .champions-rank-adjustment .rankicon {
+	margin: -4px 2px -4px 2px;
+	transform: scale(0.82);
+	transform-origin: center;
+}
+.battle-log .champions-rank-adjustment .champions-rank-title,
+.battle-log-add .champions-rank-adjustment .champions-rank-title {
+	white-space: nowrap;
+}
+.battle-log .champions-rank-adjustment small,
+.battle-log-add .champions-rank-adjustment small {
+	color: #555555;
+}
+.battle-log .champions-rank-adjustment small.good,
+.battle-log-add .champions-rank-adjustment small.good {
+	color: #1f8f3a;
+	font-weight: bold;
+}
+.battle-log .champions-rank-adjustment small.bad,
+.battle-log-add .champions-rank-adjustment small.bad {
+	color: #c0342b;
+	font-weight: bold;
+}
+.battle-log .champions-rank-adjustment small.neutral,
+.battle-log-add .champions-rank-adjustment small.neutral {
+	color: #666666;
+}
 .picon {
 	display: inline-block;
 	vertical-align: middle;
@@ -730,13 +1064,13 @@ License: GPLv2
 .trainer .picon {
 	margin: 0 -4px;
 }
-.pixelated, .itemicon, .picon, .trainersprite {
+.pixelated, .itemicon, .rankicon, .picon, .trainersprite {
 	image-rendering: -moz-crisp-edges;
 	image-rendering: pixelated;
 	-ms-interpolation-mode: nearest-neighbor;
 }
 @media (-webkit-min-device-pixel-ratio: 1.05), (min-resolution: 1.05dppx) {
-	.pixelated, .itemicon, .picon, .trainersprite {
+	.pixelated, .itemicon, .rankicon, .picon, .trainersprite {
 		image-rendering: auto;
 	}
 }

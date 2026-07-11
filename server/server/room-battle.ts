@@ -20,6 +20,7 @@ import type { Tournament } from './tournaments/index';
 import type { RoomSettings } from './rooms';
 import type { BestOfGame } from './room-battle-bestof';
 import type { GameTimerSettings } from '../sim/dex-formats';
+import { getExternalLadderBotRating, isExternalLadderBot, type BattleBot } from './ladder-bots';
 
 type ChannelIndex = 0 | 1 | 2 | 3 | 4;
 export type PlayerIndex = 1 | 2 | 3 | 4;
@@ -108,6 +109,8 @@ export class RoomBattlePlayer extends RoomGamePlayer<RoomBattle> {
 	 */
 	knownActive: boolean;
 	invite: ID;
+	rank: string;
+	bot: BattleBot | null;
 	/**
 	 * Has the simulator received this player's team yet?
 	 * Basically always yes except when creating a 4-player battle,
@@ -133,6 +136,8 @@ export class RoomBattlePlayer extends RoomGamePlayer<RoomBattle> {
 
 		this.knownActive = true;
 		this.invite = '';
+		this.rank = '';
+		this.bot = null;
 		this.hasTeam = false;
 
 		if (user) {
@@ -461,10 +466,12 @@ export class RoomBattleTimer {
 }
 
 export interface RoomBattlePlayerOptions {
-	user: User;
+	user?: User | null;
+	bot?: BattleBot;
 	/** should be '' for random teams */
 	team?: string;
 	rating?: number;
+	rank?: string;
 	inviteOnly?: boolean;
 	hidden?: boolean;
 }
@@ -657,7 +664,7 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 
 		void this.stream.write(`>${player.slot} undo`);
 	}
-	override joinGame(user: User, slot?: SideID, playerOpts?: { team?: string }) {
+	override joinGame(user: User, slot?: SideID, playerOpts?: Partial<RoomBattlePlayerOptions>) {
 		if (user.id in this.playerTable) {
 			user.popup(`You have already joined this battle.`);
 			return false;
@@ -804,7 +811,11 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 					choice: '',
 				};
 				this.requestCount++;
-				player?.sendRoom(`|request|${requestJSON}`);
+				if (player?.bot) {
+					this.chooseBot(player, request);
+				} else {
+					player?.sendRoom(`|request|${requestJSON}`);
+				}
 				if (!request.update) this.timer.nextRequest(player);
 				break;
 			}
@@ -881,11 +892,305 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		}
 		const p1 = this.p1.name;
 		const p2 = this.p2.name;
-		const [score, p1rating, p2rating] = await Ladders(this.ladder).updateRating(
-			p1, p2, p1score, this.room
+		const [score, p1rating, p2rating] = await (Ladders(this.ladder) as any).updateRating(
+			p1, p2, p1score, this.room, {
+				skipP1: !!this.p1.bot || isExternalLadderBot(this.ladder, this.p1.id),
+				skipP2: !!this.p2.bot || isExternalLadderBot(this.ladder, this.p2.id),
+				p1EloOverride: this.p1.bot?.rating || getExternalLadderBotRating(this.ladder, this.p1.id),
+				p2EloOverride: this.p2.bot?.rating || getExternalLadderBotRating(this.ladder, this.p2.id),
+			}
 		);
 		void this.logBattle(score, p1rating, p2rating);
 		Chat.runHandlers('onBattleRanked', this, winnerid, [p1rating, p2rating], [p1, p2].map(toID));
+	}
+
+	chooseBot(player: RoomBattlePlayer, request: AnyObject) {
+		if (this.ended || request.wait) return;
+		let choice = 'default';
+		if (request.teamPreview) {
+			const lead = this.chooseBotLead(player, request);
+			choice = lead ? `team ${lead}` : 'default';
+		} else if (request.forceSwitch) {
+			const pokemon = request.side?.pokemon || [];
+			const chosen: number[] = [];
+			choice = request.forceSwitch.map((mustSwitch: boolean) => {
+				if (!mustSwitch) return 'pass';
+				const options = pokemon
+					.map((cur: AnyObject, index: number) => ({cur, slot: index + 1}))
+					.filter(({cur, slot}: {cur: AnyObject, slot: number}) => (
+						cur && !cur.active && !chosen.includes(slot) && !String(cur.condition).endsWith(' fnt')
+					));
+				const target = this.chooseBotSwitch(player, options.map(({slot}: {slot: number}) => slot)) || 0;
+				if (!target) return 'pass';
+				chosen.push(target);
+				return `switch ${target}`;
+			}).join(', ');
+		} else if (request.active) {
+			const switchChoice = this.chooseBotVoluntarySwitch(player, request);
+			if (switchChoice) {
+				choice = switchChoice;
+			} else {
+			choice = request.active.map((active: AnyObject, index: number) => {
+				const pokemon = request.side?.pokemon?.[index];
+				if (String(pokemon?.condition || '').endsWith(' fnt')) return 'pass';
+				return this.chooseBotMove(player, active) || 'default';
+			}).join(', ');
+			}
+		}
+		player.request.isWait = true;
+		player.request.choice = choice;
+		const delay = 250 + Math.floor(Math.random() * 450);
+		setTimeout(() => {
+			if (this.ended || player.request.choice !== choice) return;
+			void this.stream.write(`>${player.slot} ${choice}`);
+		}, delay);
+	}
+
+	getBotPokemon(player: RoomBattlePlayer) {
+		const battle = (this.stream as RoomBattleStream).battle;
+		const side = battle?.sides[player.num - 1];
+		const foeSide = battle?.sides[player.num === 1 ? 1 : 0];
+		return {
+			battle,
+			source: side?.active?.[0] || null,
+			target: foeSide?.active?.[0] || null,
+			side,
+		};
+	}
+
+	chooseBotLead(player: RoomBattlePlayer, request: AnyObject) {
+		const {side} = this.getBotPokemon(player);
+		const pokemon = request.side?.pokemon || side?.pokemon || [];
+		let bestSlot = 0;
+		let bestScore = -Infinity;
+		for (let i = 0; i < pokemon.length; i++) {
+			const requestMon = pokemon[i];
+			const candidate = side?.pokemon?.[i];
+			if (!requestMon || String(requestMon.condition || '').endsWith(' fnt')) continue;
+			const moves = candidate?.moveSlots || [];
+			let score = Math.random() * 10;
+			const item = toID(candidate?.item || requestMon.item || '');
+			const speed = candidate?.storedStats?.spe || candidate?.baseStoredStats?.spe || 0;
+			score += Math.min(70, speed / 3);
+			if (item === 'heatrock' || item === 'focussash' || item === 'heavydutyboots') score += 20;
+			for (const moveSlot of moves) {
+				const move = Dex.moves.get(moveSlot.id || moveSlot.move);
+				if (move.id === 'stealthrock') score += 95;
+				if (move.id === 'spikes') score += 75;
+				if (move.weather) score += 80;
+				if (move.selfSwitch) score += 45;
+				if (['bleakwindstorm', 'knockoff', 'thunderwave', 'nuzzle', 'yawn'].includes(move.id)) score += 30;
+				if (move.id === 'rapidspin' || move.id === 'defog') score -= 25;
+			}
+			if (score > bestScore) {
+				bestScore = score;
+				bestSlot = i + 1;
+			}
+		}
+		return bestSlot;
+	}
+
+	chooseBotMove(player: RoomBattlePlayer, active: AnyObject) {
+		const moves = (active.moves || [])
+			.map((move: AnyObject, index: number) => ({move, slot: index + 1}))
+			.filter(({move}: {move: AnyObject}) => !move.disabled);
+		if (!moves.length) return '';
+		const {battle, source, target} = this.getBotPokemon(player);
+		let best = moves[0];
+		let bestScore = -Infinity;
+		for (const option of moves) {
+			const moveData = Dex.moves.get(option.move.id || option.move.move);
+			const damage = this.estimateBotMoveDamage(battle, source, target, moveData);
+			const targetHP = target?.hp || target?.maxhp || 1;
+			const basePower = moveData.basePower || 0;
+			const accuracy = moveData.accuracy === true ? 100 : Number(moveData.accuracy || 85);
+			const hpRatio = source?.maxhp ? source.hp / source.maxhp : 1;
+			const targetHpRatio = target?.maxhp ? target.hp / target.maxhp : 1;
+			const incomingDamage = this.estimateBotIncomingDamage(battle, source, target);
+			const incomingRatio = source?.maxhp ? incomingDamage / source.maxhp : 0;
+			const bestAttackDamage = this.estimateBotBestAttackDamage(battle, source, target, active);
+			let score = damage * 2.55 + basePower * 0.15 + accuracy * 0.5;
+			if (damage >= targetHP) score += 700;
+			else if (damage >= targetHP * 0.75) score += 210;
+			else if (damage >= targetHP * 0.5) score += 95;
+			else if (!damage && moveData.category !== 'Status') score -= 90;
+			if (moveData.priority > 0 && target && damage >= target.hp) score += 240;
+			if (moveData.category === 'Status') {
+				score = this.scoreBotStatusMove(
+					moveData, source, target, hpRatio, targetHpRatio, incomingRatio, bestAttackDamage
+				);
+			}
+			if (['rapidspin', 'defog'].includes(moveData.id) && this.getBotHazardCount(source?.side)) score += 130;
+			if (moveData.forceSwitch && this.botTargetHasPositiveBoosts(target)) score += 120;
+			if (this.botMoveHasUsefulSecondary(moveData)) score += 28;
+			if (moveData.selfSwitch) score += hpRatio < 0.45 || incomingRatio > 0.45 ? 85 : 35;
+			if (moveData.flags?.recharge || moveData.self?.volatileStatus === 'mustrecharge') score -= 90;
+			if (moveData.recoil || moveData.hasCrashDamage) score -= hpRatio < 0.35 ? 95 : 20;
+			if (moveData.id === 'explosion' || moveData.id === 'selfdestruct') score -= target && damage >= target.hp ? 0 : 350;
+			if (incomingDamage >= (source?.hp || 1) && damage < targetHP) score += moveData.priority > 0 ? 45 : -60;
+			score += Math.random() * 9;
+			if (score > bestScore) {
+				best = option;
+				bestScore = score;
+			}
+		}
+		let choice = `move ${best.slot}`;
+		if (active.canMegaEvo) choice += ' mega';
+		else if (active.canUltraBurst) choice += ' ultra';
+		else if (active.canTerastallize && bestScore > 330 && Math.random() < 0.45) choice += ' terastallize';
+		return choice;
+	}
+
+	estimateBotMoveDamage(battle: AnyObject, source: AnyObject, target: AnyObject, moveData: AnyObject) {
+		if (!battle || !source || !target || !moveData?.exists || moveData.category === 'Status') return 0;
+		try {
+			const move = battle.dex.getActiveMove(moveData.id);
+			move.willCrit = false;
+			const damage = battle.actions.getDamage(source, target, move, true);
+			if (Array.isArray(damage)) return Math.max(...damage.map(Number).filter(Boolean));
+			if (typeof damage === 'number') return damage;
+		} catch {}
+		const typeMod = target.runEffectiveness ? 2 ** target.runEffectiveness(moveData) : 1;
+		return Math.max(0, (moveData.basePower || 0) * typeMod);
+	}
+
+	estimateBotIncomingDamage(battle: AnyObject, source: AnyObject, target: AnyObject) {
+		if (!battle || !source || !target) return 0;
+		let incomingDamage = 0;
+		for (const moveSlot of target.moveSlots || []) {
+			const move = Dex.moves.get(moveSlot.id);
+			incomingDamage = Math.max(incomingDamage, this.estimateBotMoveDamage(battle, target, source, move));
+		}
+		return incomingDamage;
+	}
+
+	estimateBotBestAttackDamage(battle: AnyObject, source: AnyObject, target: AnyObject, active: AnyObject) {
+		if (!battle || !source || !target) return 0;
+		let bestDamage = 0;
+		for (const requestMove of active?.moves || []) {
+			if (requestMove.disabled) continue;
+			const move = Dex.moves.get(requestMove.id || requestMove.move);
+			if (move.category === 'Status') continue;
+			bestDamage = Math.max(bestDamage, this.estimateBotMoveDamage(battle, source, target, move));
+		}
+		return bestDamage;
+	}
+
+	scoreBotStatusMove(
+		move: AnyObject, source: AnyObject, target: AnyObject, hpRatio: number, targetHpRatio: number,
+		incomingRatio: number, bestAttackDamage: number
+	) {
+		let score = 0;
+		const targetHP = target?.hp || target?.maxhp || 1;
+		const canMakeProgress = bestAttackDamage >= targetHP * 0.28;
+		const targetHasMagicBounce = !!target?.hasAbility?.('magicbounce');
+		const boosts = move.boosts || move.self?.boosts;
+		if (boosts) {
+			const currentBoosts = source?.boosts || {};
+			for (const stat of ['atk', 'def', 'spa', 'spd', 'spe', 'accuracy', 'evasion']) {
+				const boost = boosts[stat] || 0;
+				const currentBoost = currentBoosts[stat] || 0;
+				if (boost > 0 && currentBoost < 2) score += boost * (incomingRatio > 0.33 ? 18 : 72);
+				if (boost > 0 && currentBoost >= 2) score -= 130;
+				if (boost < 0 && target && (target.boosts?.[stat] || 0) > -3) score += Math.abs(boost) * 40;
+			}
+			if (hpRatio < 0.65 || incomingRatio > 0.33) score *= 0.35;
+			if (canMakeProgress && incomingRatio > 0.22) score -= 120;
+		}
+		if (move.heal || move.drain) score += hpRatio < 0.35 ? 330 : hpRatio < 0.62 ? 150 : -110;
+		if (move.status && target && !target.status) score += hpRatio > 0.35 && targetHpRatio > 0.25 ? 145 : 25;
+		if (move.volatileStatus && target && !target.volatiles?.[move.volatileStatus]) score += 75;
+		if (move.sideCondition) {
+			if (targetHasMagicBounce) return -500;
+			const layer = source?.side?.sideConditions?.[move.sideCondition]?.layers || 0;
+			score += layer ? (move.id === 'spikes' && layer < 3 ? 35 : -150) : 105;
+			if (targetHpRatio < 0.45 || incomingRatio > 0.28 || canMakeProgress) score -= 110;
+		}
+		if (move.pseudoWeather) score += source?.battle?.field?.pseudoWeather?.[move.pseudoWeather] ? -60 : 85;
+		if (move.weather) score += source?.battle?.field?.weather === move.weather ? -80 : 65;
+		if (move.id === 'haze' && this.botTargetHasPositiveBoosts(target)) score += 190;
+		if (move.id === 'defog' && this.getBotHazardCount(source?.side)) score += 150;
+		if (['protect', 'detect', 'spikyshield', 'banefulbunker', 'kingsshield'].includes(move.id)) {
+			score += source?.volatiles?.stall ? -180 : 35;
+		}
+		if (incomingRatio > 0.45 && canMakeProgress) score -= 180;
+		return score + Math.random() * 8;
+	}
+
+	botMoveHasUsefulSecondary(move: AnyObject) {
+		if (move.secondaries?.length) return true;
+		return !!(move.status || move.volatileStatus || move.forceSwitch || move.selfSwitch || move.drain);
+	}
+
+	getBotHazardCount(side: AnyObject) {
+		if (!side?.sideConditions) return 0;
+		let count = 0;
+		for (const id of ['stealthrock', 'spikes', 'toxicspikes', 'stickyweb']) {
+			const condition = side.sideConditions[id];
+			if (condition) count += condition.layers || 1;
+		}
+		return count;
+	}
+
+	botTargetHasPositiveBoosts(target: AnyObject) {
+		if (!target?.boosts) return false;
+		return ['atk', 'def', 'spa', 'spd', 'spe', 'accuracy', 'evasion'].some(stat => (target.boosts[stat] || 0) > 0);
+	}
+
+	chooseBotVoluntarySwitch(player: RoomBattlePlayer, request: AnyObject) {
+		const active = request.active?.[0];
+		if (!active || active.trapped || active.maybeTrapped) return '';
+		const {battle, source, target} = this.getBotPokemon(player);
+		if (!battle || !source || !target || !source.maxhp) return '';
+		const hpRatio = source.hp / source.maxhp;
+		const bestMoveDamage = Math.max(0, ...((active.moves || []) as AnyObject[])
+			.filter(move => !move.disabled)
+			.map(move => this.estimateBotMoveDamage(battle, source, target, Dex.moves.get(move.id || move.move))));
+		if (target.hp && bestMoveDamage >= target.hp) return '';
+		const incomingDamage = this.estimateBotIncomingDamage(battle, source, target);
+		if (source.hp && incomingDamage >= source.hp && bestMoveDamage >= target.hp) return '';
+		const shouldSwitch = hpRatio < 0.24 ||
+			(bestMoveDamage < target.maxhp * 0.18 && incomingDamage > source.maxhp * 0.42) ||
+			(hpRatio < 0.48 && bestMoveDamage < target.maxhp * 0.22 && Math.random() < 0.45);
+		if (!shouldSwitch) return '';
+		const slots = (request.side?.pokemon || [])
+			.map((pokemon: AnyObject, index: number) => ({pokemon, slot: index + 1}))
+			.filter(({pokemon}: {pokemon: AnyObject}) => (
+				pokemon && !pokemon.active && !String(pokemon.condition).endsWith(' fnt')
+			))
+			.map(({slot}: {slot: number}) => slot);
+		const switchSlot = this.chooseBotSwitch(player, slots);
+		return switchSlot ? `switch ${switchSlot}` : '';
+	}
+
+	chooseBotSwitch(player: RoomBattlePlayer, slots: number[]) {
+		if (!slots.length) return 0;
+		const {battle, side, target} = this.getBotPokemon(player);
+		if (!battle || !side || !target) return slots[Math.floor(Math.random() * slots.length)];
+		let bestSlot = slots[0];
+		let bestScore = -Infinity;
+		for (const slot of slots) {
+			const candidate = side.pokemon?.[slot - 1];
+			if (!candidate || candidate.fainted) continue;
+			const hpRatio = candidate.maxhp ? candidate.hp / candidate.maxhp : 0;
+			let bestDamage = 0;
+			for (const moveSlot of candidate.moveSlots || []) {
+				const move = Dex.moves.get(moveSlot.id);
+				bestDamage = Math.max(bestDamage, this.estimateBotMoveDamage(battle, candidate, target, move));
+			}
+			let incomingDamage = 0;
+			for (const moveSlot of target.moveSlots || []) {
+				const move = Dex.moves.get(moveSlot.id);
+				incomingDamage = Math.max(incomingDamage, this.estimateBotMoveDamage(battle, target, candidate, move));
+			}
+			const defensiveScore = candidate.maxhp ? Math.max(0, 130 - incomingDamage / candidate.maxhp * 180) : 0;
+			const score = hpRatio * 160 + bestDamage * 1.7 + defensiveScore + Math.random() * 20;
+			if (score > bestScore) {
+				bestScore = score;
+				bestSlot = slot;
+			}
+		}
+		return bestSlot;
 	}
 	async logBattle(
 		p1score: number, p1rating: AnyObject | null = null, p2rating: AnyObject | null = null,
@@ -1012,7 +1317,7 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		if (player && !player.active) {
 			player.active = true;
 			this.timer.checkActivity();
-			this.room.add(`|player|${player.slot}|${user.name}|${user.avatar}|`);
+			this.room.add(`|player|${player.slot}|${user.name}|${user.avatar}||${player.rank}`);
 			Chat.runHandlers('onBattleJoin', player.slot, user, this);
 		}
 	}
@@ -1075,14 +1380,25 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		this[slot] = player;
 
 		if (playerOpts) {
+			if (playerOpts.bot) {
+				player.bot = playerOpts.bot;
+				player.name = playerOpts.bot.name;
+				player.active = true;
+				player.knownActive = true;
+			}
+			player.rank = playerOpts.rank || '';
 			const options = {
 				name: player.name,
-				avatar: user ? `${user.avatar}` : '',
+				avatar: user ? `${user.avatar}` : (playerOpts.bot?.avatar || ''),
 				team: playerOpts.team || undefined,
 				rating: Math.round(playerOpts.rating || 0),
+				rank: playerOpts.rank || undefined,
 			};
 			void this.stream.write(`>player ${slot} ${JSON.stringify(options)}`);
 			player.hasTeam = true;
+			if (playerOpts.bot) {
+				this.room.add(`|player|${slot}|${player.name}|${playerOpts.bot.avatar}||`);
+			}
 		}
 
 		if (user) {
@@ -1157,7 +1473,7 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		return new RoomBattlePlayer(user, this, num);
 	}
 
-	override setPlayerUser(player: RoomBattlePlayer, user: User | null, playerOpts?: { team?: string }) {
+	override setPlayerUser(player: RoomBattlePlayer, user: User | null, playerOpts?: Partial<RoomBattlePlayerOptions>) {
 		if (user === null && this.room.auth.get(player.id) === Users.PLAYER_SYMBOL) {
 			this.room.auth.set(player.id, '+');
 		}
@@ -1166,19 +1482,22 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		player.invite = '';
 		const slot = player.slot;
 		if (user) {
+			player.rank = playerOpts?.rank || player.rank || '';
 			player.active = user.inRooms.has(this.roomid);
 			player.knownActive = true;
 			const options = {
 				name: player.name,
 				avatar: user.avatar,
 				team: playerOpts?.team,
+				rank: playerOpts?.rank,
 			};
 			void this.stream.write(`>player ${slot} ` + JSON.stringify(options));
 			if (playerOpts) player.hasTeam = true;
 
-			this.room.add(`|player|${slot}|${player.name}|${user.avatar}|`);
+			this.room.add(`|player|${slot}|${player.name}|${user.avatar}||${player.rank}`);
 			Chat.runHandlers('onBattleJoin', slot as string, user, this);
 		} else {
+			player.rank = '';
 			player.active = false;
 			player.knownActive = false;
 			const options = {
@@ -1219,16 +1538,27 @@ export class RoomBattle extends RoomGame<RoomBattlePlayer> {
 		const delayStart = this.options.delayedStart || !!this.options.inputLog;
 		const users = this.players.map(player => {
 			const user = player.getUser();
-			if (!user && !delayStart) {
+			if (!user && !delayStart && !player.bot) {
 				throw new Error(`User ${player.id} not found on ${this.roomid} battle creation`);
 			}
 			return user;
 		});
 		if (!delayStart) {
-			Rooms.global.onCreateBattleRoom(users as User[], this.room, { rated: this.rated });
+			Rooms.global.onCreateBattleRoom(users.filter(Boolean) as User[], this.room, { rated: this.rated });
 			this.started = true;
+			this.addChampionsRanks();
 		} else if (delayStart === 'multi') {
 			this.room.add(`|uhtml|invites|<div class="broadcast broadcast-blue"><strong>This is a 4-player challenge battle</strong><br />The players will need to add more players before the battle can start.</div>`);
+		}
+	}
+
+	addChampionsRanks() {
+		if (this.format !== 'gen9natdexchampionsou') return;
+		for (const player of this.players) {
+			if (!player.rank) continue;
+			const [rankid, rankName, placement, elo] = player.rank.split(',');
+			if (!rankid || !rankName) continue;
+			this.room.add(`|championsrank|${player.slot}|${rankid}|${rankName}|${elo || ''}|${placement || ''}`);
 		}
 	}
 

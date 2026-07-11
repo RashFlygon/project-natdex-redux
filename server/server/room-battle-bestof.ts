@@ -102,6 +102,7 @@ export class BestOfGame extends RoomGame<BestOfPlayer> {
 			players: null,
 		};
 		for (const playerOpts of options.players) {
+			if (!playerOpts.user) throw new Error(`Best-of battles do not support bot players.`);
 			this.addPlayer(playerOpts.user, playerOpts);
 		}
 		process.nextTick(() => this.nextGame());

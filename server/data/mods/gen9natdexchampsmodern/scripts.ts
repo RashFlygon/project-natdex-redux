@@ -7,11 +7,39 @@ type LearnsetTable = import('../../../sim/dex-species').ModdedLearnsetDataTable;
 type LearnsetData = LearnsetTable[keyof LearnsetTable];
 type StringLearnsetTable = {[speciesid: string]: LearnsetData | undefined};
 type StringLearnset = {[moveid: string]: string[]};
+type AbilitySlots = Partial<Record<'0' | '1' | 'H' | 'S', string>>;
 
 export const Scripts: ModdedBattleScriptsData = {
 	inherit: 'champions',
 	gen: 9,
 	init() {
+		const megaAbilityOverrides: {[speciesid: string]: AbilitySlots} = {
+			absolmegaz: {0: "Super Luck"},
+			baxcaliburmega: {0: "Thermal Exchange", H: "Ice Body"},
+			darkraimega: {0: "Bad Dreams"},
+			garchompmegaz: {0: "Sand Veil"},
+			golisopodmega: {0: "Emergency Exit"},
+			heatranmega: {0: "Flash Fire"},
+			lucariomegaz: {0: "Steadfast"},
+			magearnamega: {0: "Soul-Heart"},
+			magearnaoriginalmega: {0: "Soul-Heart"},
+			tatsugiricurlymega: {0: "Commander"},
+			tatsugiridroopymega: {0: "Commander"},
+			tatsugiristretchymega: {0: "Commander"},
+			zeraoramega: {0: "Volt Absorb"},
+			zygardemega: {0: "Aura Break"},
+		};
+		for (const [speciesId, abilities] of Object.entries(megaAbilityOverrides)) {
+			const species = this.modData('Pokedex', speciesId);
+			species.abilities = abilities;
+			delete species.isNonstandard;
+		}
+		for (const itemId of [
+			'absolitez', 'baxcalibrite', 'darkranite', 'garchompitez', 'golisopite', 'heatranite',
+			'lucarionitez', 'magearnite', 'tatsugirinite', 'zeraorite', 'zygardite',
+		]) {
+			delete this.modData('Items', itemId).isNonstandard;
+		}
 		const sources = [BaseLearnsets, PLALearnsets, ZALearnsets] as LearnsetTable[];
 		for (const source of sources) {
 			for (const speciesId in source as StringLearnsetTable) {

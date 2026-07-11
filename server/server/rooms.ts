@@ -1498,6 +1498,7 @@ export class GlobalRoomState {
 			if (format.bestOfDefault) displayCode |= 64;
 			if (format.teraPreviewDefault) displayCode |= 128;
 			if (format.itemClauseDefault) displayCode |= 256;
+			if (format.terastalClauseOption) displayCode |= 512;
 			this.formatList += ',' + displayCode.toString(16);
 		}
 		return this.formatList;
@@ -2204,10 +2205,10 @@ export const Rooms = {
 	 * No need for UI; this function sends popups to users.
 	 */
 	createBattle(options: RoomBattleOptions & Partial<RoomSettings>) {
-		const players = options.players.map(player => player.user);
+		const players = options.players.map(player => player.user).filter(Boolean) as User[];
 		const format = Dex.formats.get(options.format);
-		if (players.length > format.playerCount) {
-			throw new Error(`${players.length} players were provided, but the format is a ${format.playerCount}-player format.`);
+		if (options.players.length > format.playerCount) {
+			throw new Error(`${options.players.length} players were provided, but the format is a ${format.playerCount}-player format.`);
 		}
 		if (new Set(players).size < players.length) {
 			throw new Error(`Players can't battle themselves`);
@@ -2256,10 +2257,10 @@ export const Rooms = {
 		// options.rated < 0 or falsy means "unrated", and will be converted to 0 here
 		// options.rated === true is converted to 1 (used in tests sometimes)
 		options.rated = Math.max(+options.rated! || 0, 0);
-		const p1 = players[0];
-		const p2 = players[1];
-		const p1name = p1 ? p1.name : "Player 1";
-		const p2name = p2 ? p2.name : "Player 2";
+		const p1 = options.players[0];
+		const p2 = options.players[1];
+		const p1name = p1?.user ? p1.user.name : (p1?.bot?.name || "Player 1");
+		const p2name = p2?.user ? p2.user.name : (p2?.bot?.name || "Player 2");
 		let roomTitle;
 		let roomid = options.roomid;
 		if (format.gameType === 'multi') {

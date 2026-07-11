@@ -115,10 +115,6 @@ export const Items: import('../../../sim/dex-items').ModdedItemDataTable = {
 		inherit: true,
 		isNonstandard: "Past",
 	},
-	barbaracite: {
-		inherit: true,
-		isNonstandard: null,
-	},
 	bottlecap: {
 		inherit: true,
 		isNonstandard: "Past",
@@ -225,7 +221,7 @@ export const Items: import('../../../sim/dex-items').ModdedItemDataTable = {
 	},
 	dragalgite: {
 		inherit: true,
-		isNonstandard: null,
+		isNonstandard: "Past",
 	},
 	dragoninite: {
 		inherit: true,
@@ -265,7 +261,7 @@ export const Items: import('../../../sim/dex-items').ModdedItemDataTable = {
 	},
 	eelektrossite: {
 		inherit: true,
-		isNonstandard: null,
+		isNonstandard: "Past",
 	},
 	ejectbutton: {
 		inherit: true,
@@ -305,7 +301,7 @@ export const Items: import('../../../sim/dex-items').ModdedItemDataTable = {
 	},
 	falinksite: {
 		inherit: true,
-		isNonstandard: null,
+		isNonstandard: "Past",
 	},
 	fastball: {
 		inherit: true,
@@ -599,10 +595,6 @@ export const Items: import('../../../sim/dex-items').ModdedItemDataTable = {
 		inherit: true,
 		isNonstandard: "Past",
 	},
-	malamarite: {
-		inherit: true,
-		isNonstandard: null,
-	},
 	manectite: {
 		inherit: true,
 		isNonstandard: null,
@@ -700,30 +692,6 @@ export const Items: import('../../../sim/dex-items').ModdedItemDataTable = {
 		isNonstandard: null,
 	},
 	pinsirite: {
-		inherit: true,
-		isNonstandard: null,
-	},
-	pyroarite: {
-		inherit: true,
-		isNonstandard: null,
-	},
-	raichunitex: {
-		inherit: true,
-		isNonstandard: null,
-	},
-	raichunitey: {
-		inherit: true,
-		isNonstandard: null,
-	},
-	scraftinite: {
-		inherit: true,
-		isNonstandard: null,
-	},
-	scolipite: {
-		inherit: true,
-		isNonstandard: null,
-	},
-	staraptite: {
 		inherit: true,
 		isNonstandard: null,
 	},
