@@ -530,14 +530,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions Draft",
 		mod: 'gen9natdexchampsclassic',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
 		name: "[Gen 9] NDC Draft M-A",
 		mod: 'gen9natdexchampsclassicma',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
@@ -545,7 +545,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassic',
 		gameType: 'doubles',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
@@ -553,7 +553,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsclassicma',
 		gameType: 'doubles',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
@@ -564,14 +564,14 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		name: "[Gen 9] NatDex Champions (Modern) Draft",
 		mod: 'gen9natdexchampsmodern',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod', 'Adjust Level = 50'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
 		name: "[Gen 9] NDC Modern Draft M-A",
 		mod: 'gen9natdexchampsmodernma',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod', 'Adjust Level = 50'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
@@ -579,7 +579,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsmodern',
 		gameType: 'doubles',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod', 'Adjust Level = 50'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 	{
@@ -587,7 +587,7 @@ const AllFormats: import('../sim/dex-formats').FormatList = [
 		mod: 'gen9natdexchampsmodernma',
 		gameType: 'doubles',
 		searchShow: false,
-		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Adjust Level = 50'],
+		ruleset: ['Standard Draft', 'NatDex Mod', 'Tera Type Preview', 'Sleep Clause Mod', 'Adjust Level = 50'],
 		unbanlist: natDexChampionsMoveUnbans,
 	},
 
